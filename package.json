@@ -1,0 +1,16 @@
+{
+  "name": "agent-office",
+  "version": "0.1.0",
+  "private": true,
+  "main": "app/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  }
+}

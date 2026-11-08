@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>Agent Office</title>
+<style>
+  body { margin: 0; overflow: hidden; font-family: system-ui, "Malgun Gothic", sans-serif; background: #cfe3f0; }
+  button { border: none; border-radius: 18px; padding: 8px 16px; font-size: 14px; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  #labels { position: fixed; inset: 0; pointer-events: none; }
+  .tag { text-align: center; font-size: 12px; color: #333; }
+  .tag b { background: #fff; padding: 1px 7px; border-radius: 8px; box-shadow: 0 1px 3px #0003; white-space: nowrap; }
+  .tag small { color: #666; margin-left: 3px; }
+  .bubble { display: none; background: #fff; border-radius: 10px; padding: 4px 9px; margin-bottom: 5px; max-width: 220px; box-shadow: 0 2px 6px #0003; }
+  .bubble.ask { display: block; background: #ffebee; color: #c62828; font-weight: 600; }
+  .doing { font-size: 11px; color: #1b5e20; background: #e8f5e9cc; border-radius: 6px; padding: 0 5px; margin-bottom: 3px; white-space: nowrap; }
+  .doing:empty { display: none; }
+  #top { position: fixed; left: 12px; top: 12px; display: flex; gap: 8px; align-items: center; background: #fffd; border-radius: 20px; padding: 4px 6px 4px 4px; }
+  #top button { background: #5c6bc0; color: #fff; }
+  #path { font-size: 13px; color: #444; max-width: 50vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #ui { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: flex; gap: 8px; }
+  #ui input { width: 420px; padding: 11px 16px; border-radius: 22px; border: none; font-size: 15px; box-shadow: 0 2px 8px #0003; }
+  #go { background: #ff7043; color: #fff; }
+  #stop { background: #78909c; color: #fff; }
+  #side { position: fixed; right: 12px; top: 12px; width: 300px; max-height: calc(100vh - 24px); display: flex; flex-direction: column; gap: 8px; }
+  .card { background: #fff; border-radius: 12px; padding: 10px 12px; box-shadow: 0 2px 8px #0002; font-size: 13px; }
+  .card.ask { border: 2px solid #ef5350; }
+  .card.ask div { margin: 6px 0 8px; }
+  .card.ask button { padding: 5px 14px; margin-right: 6px; }
+  .yes { background: #66bb6a; color: #fff; } .no { background: #eee; }
+  #log { overflow: auto; line-height: 1.5; }
+  #log h3 { margin: 0 0 6px; font-size: 14px; }
+  #log time { color: #999; margin-right: 4px; }
+  #log .err { color: #c62828; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "../node_modules/three/build/three.module.js",
+  "three/addons/": "../node_modules/three/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="top"><button id="pick">📁 프로젝트 선택</button><span id="path">선택된 프로젝트 없음</span></div>
+<div id="side"><div id="asks"></div><div id="log" class="card"><h3>📋 업무 로그</h3></div></div>
+<form id="ui">
+  <input id="task" placeholder="먼저 프로젝트 폴더를 선택하세요" autocomplete="off" disabled>
+  <button id="go" disabled>지시하기</button><button id="stop" type="button" hidden>중지</button>
+</form>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ---------- scene ----------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xcfe3f0);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 200);
+camera.position.set(0, 17, 17);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+const labels = new CSS2DRenderer();
+labels.setSize(innerWidth, innerHeight);
+labels.domElement.id = 'labels';
+document.body.appendChild(labels.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.maxPolarAngle = Math.PI / 2.2;
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); labels.setSize(innerWidth, innerHeight);
+});
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.3));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(8, 16, 6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -15, right: 15, top: 15, bottom: -15 });
+scene.add(sun);
+
+const mat = c => new THREE.MeshStandardMaterial({ color: c });
+const V = (x, z) => new THREE.Vector3(x, 0, z);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function mesh(geo, color, x, y, z, parent = scene) {
+  const m = new THREE.Mesh(geo, mat(color));
+  m.position.set(x, y, z); m.castShadow = m.receiveShadow = true;
+  parent.add(m); return m;
+}
+const box = (w, h, d, c, x, y, z) => mesh(new THREE.BoxGeometry(w, h, d), c, x, y, z);
+
+// ---------- office ----------
+const LANE = -1;                 // walkway: every route goes along it
+const DOOR = V(-11.3, LANE);
+box(24, 0.2, 18, 0xf3e9dc, 0, -0.1, 0);          // floor
+box(24, 3, 0.2, 0xffffff, 0, 1.5, -9);           // back wall
+box(0.2, 3, 18, 0xffffff, -12, 1.5, 0);          // left wall
+box(0.25, 2.2, 1.4, 0x8d6e63, -11.9, 1.1, LANE); // door
+box(10, 0.02, 4.5, 0xa8d5ba, 0, 0.01, 6);        // lounge rug
+box(19, 0.02, 3, 0xd0e4ff, 0, 0.01, 1.2);        // team area
+box(5, 0.02, 2.5, 0xfff1b8, 0, 0.01, -7.6);      // 대표 area
+box(0.8, 1.3, 0.6, 0x6d4c41, -10.5, 0.65, 8);    // coffee machine
+for (const [x, z] of [[-11, -8], [11, -8], [10.5, 8], [-3, 8]]) {
+  mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.5), 0xb5651d, x, 0.25, z);
+  mesh(new THREE.SphereGeometry(0.55, 16, 12), 0x5cb85c, x, 0.95, z);
+}
+// s = +1: seat on +z side facing -z, s = -1: seat on -z side facing +z
+function desk(x, z, s) {
+  box(1.4, 0.08, 0.8, 0xd7b98e, x, 0.75, z);
+  box(1.2, 0.7, 0.6, 0xc9a77a, x, 0.35, z);
+  const screen = box(0.65, 0.42, 0.05, 0x222222, x, 1.05, z - s * 0.25);
+  return { screen, seat: V(x, z + s * 0.8), rot: s > 0 ? Math.PI : 0, owner: null };
+}
+const ceoDesk = desk(0, -7.6, -1);
+const leadDesk = desk(0, -3.5, 1);
+const staffDesks = [-7.5, -4.5, -1.5, 1.5, 4.5, 7.5].map(x => desk(x, 1.5, -1));
+
+// ---------- agents ----------
+const RANK_COLOR = { 대표: 0xffc107, 팀장: 0x42a5f5, 대리: 0x66bb6a, 사원: 0xf48fb1 };
+const HAIR = [0x3e2723, 0x5d4037, 0x212121, 0x8d6e63, 0xffb74d];
+const NAMES = ['도윤', '하은', '시우', '유나', '준호', '지우', '서아', '이안', '채원', '로운'];
+let made = 0;
+const live = new Set();   // everyone on the floor, including people walking out
+
+function makeAgent(name, rank, note, at) {
+  const g = new THREE.Group();
+  mesh(new THREE.CapsuleGeometry(0.28, 0.3, 4, 12), RANK_COLOR[rank], 0, 0.45, 0, g);
+  const head = new THREE.Group(); head.position.y = 1.05; g.add(head);
+  mesh(new THREE.SphereGeometry(0.33, 24, 16), 0xffe0bd, 0, 0, 0, head);
+  const hair = mesh(new THREE.SphereGeometry(0.35, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2.3), HAIR[made++ % HAIR.length], 0, 0.03, -0.02, head);
+  hair.rotation.x = -0.35;
+  for (const ex of [-0.11, 0.11]) {
+    mesh(new THREE.SphereGeometry(0.045, 8, 8), 0x222222, ex, 0.02, 0.3, head);
+    mesh(new THREE.SphereGeometry(0.05, 8, 8), 0xff9e9e, ex * 1.7, -0.08, 0.26, head);
+  }
+  if (rank === '대표') mesh(new THREE.ConeGeometry(0.18, 0.3, 5), 0xffd700, 0, 0.45, 0, head);
+
+  const el = document.createElement('div');
+  el.className = 'tag';
+  el.innerHTML = `<div class="bubble"></div><div class="doing"></div><b>${name}<small>${rank}${note ? ' · ' + note : ''}</small></b>`;
+  const label = new CSS2DObject(el); label.position.y = 1.75; g.add(label);
+  g.position.copy(at);
+  scene.add(g);
+  const a = { name, rank, g, head, label, path: [], q: Promise.resolve(),
+           bubble: el.querySelector('.bubble'), doing: el.querySelector('.doing') };
+  live.add(a);
+  return a;
+}
+function sit(a, d) { a.desk = d; d.owner = a; a.g.position.copy(d.seat); a.g.rotation.y = d.rot; }
+
+const me = makeAgent('나', '대표', '', ceoDesk.seat); sit(me, ceoDesk);
+const lead = makeAgent('민준', '팀장', 'Claude', leadDesk.seat); sit(lead, leadDesk);
+const agents = new Map([['lead', lead]]);
+
+// ---------- movement / actions ----------
+// ponytail: fixed routing along LANE, no pathfinding or collision; add A* + avoidance with the customizable layout
+const route = (a, b) => [V(a.x, LANE), V(b.x, LANE), b];
+function go(a, dest, look) {
+  return new Promise(done => {
+    a.path = route(a.g.position, dest);
+    a.look = a.desk && dest === a.desk.seat ? a.desk.rot : look;
+    a.arrive = done;
+  });
+}
+const face = (a, b) => a.g.rotation.y = Math.atan2(b.g.position.x - a.g.position.x, b.g.position.z - a.g.position.z);
+function say(a, text, ms = 2500) {
+  a.bubble.textContent = text; a.bubble.style.display = 'block';
+  clearTimeout(a.sayT); a.sayT = setTimeout(() => a.bubble.style.display = '', ms);
+  return sleep(ms);
+}
+// each agent plays its events strictly in order
+const act = (a, fn) => a.q = a.q.then(fn).catch(console.error);
+const toDesk = async a => { await go(a, a.desk.seat); a.typing = true; };
+
+function remove(a) {
+  a.g.remove(a.label);   // detaches the label's DOM node
+  scene.remove(a.g);
+  live.delete(a);
+  if (a.desk) { a.desk.owner = null; a.desk.screen.material.emissive.setHex(0); }
+}
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+const logEl = $('log');
+function log(msg, cls = '') {
+  const d = document.createElement('div');
+  d.className = cls;
+  d.innerHTML = `<time>${new Date().toLocaleTimeString('ko-KR', { hour12: false })}</time>`;
+  d.append(msg);
+  logEl.insertBefore(d, logEl.children[1]);
+}
+function setRunning(on) {
+  $('task').disabled = $('go').disabled = on;
+  $('stop').hidden = !on;
+}
+function setProject(p) {
+  $('path').textContent = p;
+  $('task').disabled = $('go').disabled = false;
+  $('task').placeholder = '팀장에게 업무 지시 (예: README에 설치 방법 추가해줘)';
+}
+$('pick').onclick = async () => { const p = await office.pick(); if (p) setProject(p); };
+$('ui').onsubmit = e => {
+  e.preventDefault();
+  const t = $('task').value.trim();
+  if (!t) return;
+  $('task').value = '';
+  setRunning(true);
+  log(`📥 지시: "${t}"`);
+  act(me, () => say(me, t, 2500));
+  office.run(t);
+};
+$('stop').onclick = () => office.stop();
+
+// ---------- OfficeEvents from the CLI ----------
+const asks = new Map();   // ask id → agent
+let reports = 0;
+
+office.on(e => {
+  const a = agents.get(e.agent);
+  switch (e.kind) {
+    case 'project':
+      setProject(e.path);
+      break;
+    case 'start':
+      act(lead, () => { say(lead, '바로 시작하겠습니다! 🫡'); });
+      break;
+    case 'say':
+      if (a) act(a, () => { say(a, e.text, 3500); });   // talking never holds up the next action
+      break;
+    case 'work':
+      if (!a) break;
+      log(`💻 ${a.name}: ${e.text}`);
+      act(a, async () => { a.doing.textContent = e.text; if (!a.typing) await toDesk(a); });
+      break;
+    case 'hire': {
+      const s = makeAgent(NAMES[agents.size % NAMES.length], '사원', e.role, DOOR);
+      const d = staffDesks.find(x => !x.owner);
+      // ponytail: 6 desks; extra subagents share desk 0 — add desks/floors when people run big swarms
+      s.desk = d || staffDesks[0]; s.desk.owner = s;
+      agents.set(e.agent, s);
+      log(`🙋 ${s.name} 출근: ${e.text}`);
+      act(s, async () => {
+        await go(s, V(-1.6 + (reports++ % 5) * 0.8, -1.8)); face(s, lead);
+        await say(s, `"${e.text}" 맡았습니다!`, 900);
+        await toDesk(s);
+      });
+      break;
+    }
+    case 'leave':
+      if (!a) break;
+      agents.delete(e.agent);
+      act(a, async () => {
+        a.typing = false; a.doing.textContent = '';
+        await go(a, V(-1.6 + (reports++ % 5) * 0.8, -1.8)); face(a, lead);
+        await say(a, '완료 보고드립니다! 📄', 900);
+        await say(a, '퇴근합니다! 👋', 600);
+        await go(a, DOOR);
+        remove(a);
+      });
+      log(`👋 ${a.name} 보고 후 퇴근`);
+      break;
+    case 'ask': {
+      const who = a || lead;
+      asks.set(e.id, who);
+      act(who, async () => {
+        who.typing = false;
+        await go(who, V(1 + (asks.size - 1) * 0.8, -6.5)); face(who, me);
+        who.bubble.className = 'bubble ask'; who.bubble.textContent = `🙏 ${e.text}`;
+        who.asking = true;
+      });
+      const card = document.createElement('div');
+      card.className = 'card ask'; card.id = 'ask-' + e.id;
+      card.innerHTML = `<b>🙏 ${who.name} ${who.rank}의 승인 요청</b><div></div><button class="yes">승인</button><button class="no">거절</button>`;
+      card.querySelector('div').textContent = e.text;
+      card.querySelector('.yes').onclick = () => office.answer(e.id, true);
+      card.querySelector('.no').onclick = () => office.answer(e.id, false);
+      $('asks').append(card);
+      log(`🙏 ${who.name}: ${e.text} — 승인 대기`);
+      break;
+    }
+    case 'answer': {
+      const who = asks.get(e.id);
+      asks.delete(e.id);
+      $('ask-' + e.id)?.remove();
+      if (!who) break;
+      log(e.ok ? `✅ 승인: ${who.name}` : `⛔ 거절: ${who.name}`);
+      act(who, async () => {
+        who.asking = false; who.bubble.className = 'bubble';
+        await say(who, e.ok ? '감사합니다! 🙇' : '알겠습니다…', 700);
+        await toDesk(who);
+      });
+      break;
+    }
+    case 'done':
+      log(`🎉 완료: ${e.text}`);
+      act(lead, async () => {
+        lead.typing = false; lead.doing.textContent = '';
+        await go(lead, V(-1, -6.5)); face(lead, me);
+        await say(lead, e.ok ? `보고드립니다: ${e.text}` : `문제가 있었습니다: ${e.text}`, 4000);
+        await say(me, '수고했어요! 👏', 1500);
+        await go(lead, lead.desk.seat);
+      });
+      break;
+    case 'exit':
+      setRunning(false);
+      if (e.code) log(`⚠️ claude 종료 (코드 ${e.code}) ${e.text || ''}`, 'err');
+      for (const [id, s] of agents) {   // stopped mid-task: everyone left goes home
+        if (id === 'lead') continue;
+        agents.delete(id);
+        act(s, async () => { s.typing = s.asking = false; s.bubble.className = 'bubble'; s.doing.textContent = ''; await go(s, DOOR); remove(s); });
+      }
+      act(lead, async () => { lead.typing = false; lead.doing.textContent = ''; });
+      break;
+  }
+});
+
+// ---------- loop ----------
+const SPEED = 3.8;
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.1), t = clock.elapsedTime;
+  for (const a of live) {
+    const p = a.g.position;
+    a.head.position.y = 1.05;
+    if (a.path.length) {
+      const d = a.path[0].clone().sub(p); d.y = 0;
+      const dist = d.length(), step = SPEED * dt;
+      if (dist <= step) {
+        p.copy(a.path.shift());
+        if (!a.path.length) { if (a.look !== undefined) a.g.rotation.y = a.look; a.arrive(); }
+      } else {
+        p.addScaledVector(d.normalize(), step);
+        a.g.rotation.y = Math.atan2(d.x, d.z);
+        p.y = Math.abs(Math.sin(t * 11)) * 0.08;
+      }
+    } else if (a.asking) {
+      p.y = Math.abs(Math.sin(t * 7)) * 0.3;           // hop until 대표 decides
+    } else if (a.typing) {
+      p.y = 0;
+      a.head.position.y = 1.05 + Math.sin(t * 22) * 0.02;
+    } else p.y = 0;
+    if (a.desk) a.desk.screen.material.emissive.setHex(a.typing && !a.path.length ? 0x2277dd : 0);
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  labels.render(scene, camera);
+});
+</script>
+</body>
+</html>
