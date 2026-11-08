@@ -1,6 +1,6 @@
 // Electron main: one building, one floor per project folder. Each floor can run the user's own `claude` CLI;
 // its stream-json output becomes OfficeEvents tagged with the floor, and tool approvals are routed to 대표.
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const { spawn, execFile } = require('child_process');
 const http = require('http');
 const crypto = require('crypto');
@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
 const { parse, describe } = require('./stream.cjs');
+const skills = require('./skills.cjs');
 
 // Tools that change things → 대표 must approve. Read-only tools run freely.
 const ASK_TOOLS = 'Bash|Edit|MultiEdit|Write|NotebookEdit|WebFetch|WebSearch';
@@ -155,6 +156,13 @@ ipcMain.handle('auth-login', (_, name) => {
   spawn('cmd.exe', ['/c', 'start', '', 'cmd', '/k', CLIS[name].login], { detached: true, stdio: 'ignore' }).unref();
   return CLIS[name].login;
 });
+
+// ---------- skills & store ----------
+ipcMain.handle('skills', () => skills.installed(floors.map(f => f.path)));
+ipcMain.handle('store', () => skills.catalog());
+ipcMain.handle('store-install', (_, cli, id, sha) => skills.install(cli, id, sha));
+ipcMain.handle('store-remove', (_, cli, id) => skills.remove(cli, id));
+ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
 
 app.whenReady().then(() => {
   win = new BrowserWindow({ width: 1440, height: 900, minWidth: 1100, minHeight: 700, title: 'Agent Office',

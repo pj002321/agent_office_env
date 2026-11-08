@@ -189,6 +189,12 @@ A segmented control in the order bar header: 직접 승인 (white when on) and �
 ### Quest Toast
 Login and notice toasts drop in at the top center as a quest card: a round brass badge with a key, a Jua title in quest voice ("Codex 권한 받아와!"), one body line, then actions. While waiting, the badge wiggles; on success it turns leaf green with a check ("출입증 획득!"). The app only opens the CLI's own login in a terminal and never handles credentials.
 
+### Skill Bag (drawer)
+A right-side white drawer: Claude / Codex tabs with counts, a search field, and collapsible groups (내 스킬, 이 프로젝트, 플러그인 · name, 기본 제공). Each skill shows its invoke name (`/name`, `/plugin:name`, `$name`) in Jua with a one-line description that expands to the full text and path. Opened from the order bar's butter "스킬 불러오기" chip, it adds a 불러오기 button; picked skills sit as butter chips above the order text.
+
+### Skill Store (dialog)
+A shop sign header (teal with a coral-and-white awning strip), Claude / Codex tabs, a search field, sort, and category pills (active pill = ink). A grid of rounded product cards shows the logo (the plugin's own logo, or a pastel letter tile), name, author · category, a three-line description, install count, and the action: leaf "담기", mint "가방에 있어요" (hover turns coral "빼기", a second click confirms), or busy. The detail pane on the right holds the long description, example prompts, ID and homepage. Marketplace-declared install commands must be shown and approved in a coral confirm box before installing.
+
 ### Floor Sign (exterior)
 A white pill on the building's right side: brass floor disc, project name and a state pill (쉬는 중 / 작업 중 / 승인 대기). Clicking it enters the floor.
 

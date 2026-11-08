@@ -1,10 +1,12 @@
 // UI around the building: elevator panel (floors), order bar, approvals, journal.
 import * as world from './world.js';
 import { ICON } from './icons.js';
+import * as shop from './store.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 document.querySelectorAll('[data-icon]').forEach(el => el.insertAdjacentHTML('afterbegin', ICON[el.dataset.icon]));
+for (const [id, icon] of [['bag-close', 'x'], ['store-close', 'x'], ['store-refresh', 'refresh']]) document.getElementById(id).innerHTML = ICON[icon];
 
 let floors = [];
 const logs = [];
@@ -51,6 +53,8 @@ const addFloor = async () => {
   if (added) world.enter(added.id);
 };
 $('#add-floor').onclick = addFloor;
+$('#open-bag').onclick = () => shop.openBag();
+$('#open-store').onclick = () => shop.openStore();
 $('#empty-add').onclick = addFloor;
 
 world.onFloorChange(() => { renderPanel(); renderOrder(); renderLog(); renderAsks(); });
@@ -86,13 +90,24 @@ function renderOrder() {
   $('#to').textContent = `${st.lead} 팀장에게`;
   $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 끝나면 이어서 맡길 수 있어요` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘';
 }
+// skills picked from the bag ride in front of the order as `/skill` (Claude runs them as slash commands)
+let picked = [];
+function renderPicked() {
+  $('#picked').innerHTML = picked.map((s, i) => `<span class="pick">${ICON.spark}<code>${esc(s)}</code><button type="button" data-unpick="${i}" aria-label="${esc(s)} 빼기">${ICON.x}</button></span>`).join('');
+  $('#picked').hidden = !picked.length;
+}
+$('#picked').onclick = e => { const b = e.target.closest('[data-unpick]'); if (b) { picked.splice(+b.dataset.unpick, 1); renderPicked(); } };
+$('#use-skill').onclick = () => shop.openBag(inv => { if (!picked.includes(inv)) picked.push(inv); renderPicked(); $('#task').focus(); });
 $('#order').onsubmit = e => {
   e.preventDefault();
   const id = world.currentFloor(), t = $('#task').value.trim();
-  if (!id || !t || world.floorState(id).busy) return;
+  if (!id || (!t && !picked.length) || world.floorState(id).busy) return;
+  // ponytail: one slash skill per order reaches Claude as a command; extra picks are named in the text
+  const order = picked.length ? `${picked[0]} ${picked.length > 1 ? `(${picked.slice(1).join(', ')} 스킬도 활용해줘) ` : ''}${t}`.trim() : t;
   $('#task').value = '';
-  log({ floor: id, who: '나', rank: '대표', text: `지시: ${t}`, tone: 'order' });
-  office.run(id, t);
+  picked = []; renderPicked();
+  log({ floor: id, who: '나', rank: '대표', text: `지시: ${order}`, tone: 'order' });
+  office.run(id, order);
 };
 $('#task').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('#order').requestSubmit(); }
@@ -189,6 +204,7 @@ function toast({ id, icon, tone = 'quest', title, body, actions = [], ttl = 0 })
   clearTimeout(el.ttl);
   if (ttl) el.ttl = setTimeout(() => closeToast(id), ttl);
 }
+shop.setNotify(t => toast({ id: 'store-' + Date.now(), ttl: 5000, ...t }));
 function closeToast(id) {
   const el = document.getElementById('toast-' + id);
   if (!el) return;

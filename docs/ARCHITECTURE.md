@@ -44,6 +44,13 @@ The renderer only knows OfficeEvents, so Codex, terminal-session watching, and d
 
 At startup the app runs `claude auth status` and `codex login status` (after `where`/`which`). Missing or signed-out CLIs get a quest toast whose button opens the CLI's own login (`claude auth login` / `codex login`) in a new terminal, then polls until signed in.
 
+## Skills & store (app/skills.cjs)
+
+- Installed: `SKILL.md` folders under `~/.claude/skills`, each floor's `.claude/skills`, enabled Claude plugins' `skills/`, `~/.agents/skills`, `~/.codex/skills` (+ `.system`), and installed Codex plugins.
+- Store: `claude plugin list --available --json` (deduped by name, most installs wins; categories from local marketplace.json) and Codex marketplace snapshots from `codex plugin marketplace list` + `.codex-plugin/plugin.json` (logo, brand color, prompts).
+- Install / remove: `claude plugin install|uninstall <id> --json -s user`, `codex plugin add|remove <id>`. IDs are validated before reaching the shell. A marketplace-declared install command is shown to 대표 and passed back with `--accept-command <sha256>` only after approval.
+- Using a skill: a picked Claude skill is sent in front of the order as `/name` (verified: `claude -p` runs it as a slash command).
+
 ## Roadmap
 
 1. ✅ One floor, Claude runner, approvals, subagents

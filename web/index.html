@@ -158,6 +158,123 @@
   .toast footer { display: flex; gap: 6px; margin-top: 10px; }
   .toast footer:empty { display: none; }
   .toast footer button { border-radius: 12px; padding: 7px 14px; font: 15px var(--display); }
+  /* ---------- shelf buttons ---------- */
+  .shelf { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .shelf button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 16px; background: var(--teal-deep); color: #fff; font: 14px var(--display); transition: background .15s, transform .15s; }
+  .shelf button svg { width: 22px; height: 22px; }
+  .shelf button:hover { background: #164f49; transform: translateY(-1px); }
+  .icon-btn { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: #f3ede4; color: var(--ink); flex: none; }
+  .icon-btn:hover { background: var(--line); }
+  .muted { color: var(--ink-soft); font-size: 14px; padding: 8px 4px; }
+  .tabs { display: flex; gap: 4px; background: #f3ede4; border-radius: 14px; padding: 4px; }
+  .tabs button { flex: 1; padding: 7px 12px; border-radius: 10px; font: 15px var(--display); color: var(--ink-soft); white-space: nowrap; }
+  .tabs button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(74,58,46,.18); }
+  .tabs .n { font-size: 12px; color: var(--ink-soft); margin-left: 2px; }
+  .search { display: block; }
+  .search input { width: 100%; border: 2px solid var(--line); border-radius: 14px; padding: 9px 14px; font: 14px var(--body); color: var(--ink); background: #fffdf8; outline: none; }
+  .search input:focus { border-color: var(--teal); }
+
+  /* ---------- order bar skills ---------- */
+  #use-skill { display: flex; align-items: center; gap: 4px; margin-right: auto; margin-left: 4px; padding: 3px 9px; border-radius: 10px; font: 13px var(--display); color: #6b4a00; background: #fff3cf; }
+  #use-skill svg { width: 15px; height: 15px; }
+  #use-skill:hover { background: var(--butter); }
+  #picked { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+  .pick { display: inline-flex; align-items: center; gap: 4px; background: #fff3cf; border-radius: 10px; padding: 2px 4px 2px 8px; font-size: 13px; color: #5a3b00; }
+  .pick svg { width: 14px; height: 14px; }
+  .pick code { font: 13px var(--display); }
+  .pick button { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 6px; }
+  .pick button:hover { background: var(--butter); }
+
+  /* ---------- skill bag drawer ---------- */
+  #bag { position: fixed; right: 16px; top: 16px; bottom: 16px; width: 380px; z-index: 6; display: flex; flex-direction: column; gap: 10px; background: var(--card); border-radius: 26px; padding: 16px; box-shadow: 0 18px 50px rgba(40,30,20,.28); animation: slide .3s cubic-bezier(.2,1,.3,1); }
+  @keyframes slide { from { translate: 40px 0; opacity: 0; } }
+  #bag header { display: flex; align-items: center; justify-content: space-between; }
+  #bag h2 { margin: 0; font: 22px var(--display); font-weight: normal; }
+  #bag-list { flex: 1; min-height: 0; overflow: auto; padding-right: 4px; }
+  #bag-list .group > summary { display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none; padding: 8px 4px 4px; font: 15px var(--display); color: var(--teal-deep); }
+  #bag-list .group > summary::-webkit-details-marker, #bag-list .skill > summary::-webkit-details-marker { display: none; }
+  #bag-list .n { font-size: 12px; background: #e1f4f1; border-radius: 8px; padding: 0 7px; }
+  .skill { border-radius: 14px; margin: 2px 0; }
+  .skill > summary { list-style: none; cursor: pointer; display: grid; gap: 1px; padding: 8px 10px; border-radius: 14px; }
+  .skill > summary:hover, .skill[open] > summary { background: #fbf6ee; }
+  .skill code { font: 15px var(--display); color: var(--ink); }
+  .skill .d { font-size: 12px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .skill[open] .d { display: none; }
+  .skill .more { padding: 2px 10px 10px; font-size: 13px; }
+  .skill .more p { margin: 4px 0; overflow-wrap: anywhere; }
+  .skill .path { font-size: 11px; color: var(--ink-soft); }
+  .skill .yes { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; border-radius: 12px; padding: 6px 14px; font: 14px var(--display); }
+  .skill .yes svg { width: 15px; height: 15px; }
+  #bag-shop { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 14px; background: var(--brass); color: var(--ink); font: 15px var(--display); box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); }
+
+  /* ---------- skill store ---------- */
+  #store { position: fixed; inset: 0; z-index: 7; background: rgba(40, 30, 20, .42); display: grid; place-items: center; animation: fade .2s; }
+  @keyframes fade { from { opacity: 0; } }
+  .shop { width: min(1240px, calc(100vw - 48px)); height: calc(100vh - 48px); display: flex; flex-direction: column; background: #fffaf2; border-radius: 30px; overflow: hidden; box-shadow: 0 30px 80px rgba(40,30,20,.4); animation: rise .35s cubic-bezier(.16,1,.3,1); }
+  @keyframes rise { from { transform: translateY(16px) scale(.97); opacity: 0; } }
+  .shop-head { position: relative; display: flex; align-items: center; gap: 10px; padding: 28px 24px 16px; background: var(--teal); color: #fff; }
+  .shop-head .awning { position: absolute; left: 0; right: 0; top: 0; height: 14px; background: repeating-linear-gradient(90deg, #ff8f7a 0 36px, #fff 36px 72px); border-radius: 0 0 14px 14px; }
+  .shop-head .sign { flex: 1; }
+  .shop-head h2 { margin: 0; font: 30px var(--display); font-weight: normal; }
+  .shop-head p { margin: 2px 0 0; opacity: .9; font-size: 14px; }
+  .shop-head .icon-btn { background: rgba(255,255,255,.18); color: #fff; }
+  .shop-head .icon-btn:hover { background: rgba(255,255,255,.3); }
+  .shop-bar { display: flex; align-items: center; gap: 10px; padding: 14px 24px 8px; }
+  .shop-bar .tabs { flex: none; }
+  .shop-bar .search { flex: 1; }
+  #store-sort { border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 14px var(--display); color: var(--ink); background: #fffdf8; }
+  #store-count { font: 14px var(--display); color: var(--ink-soft); min-width: 56px; text-align: right; }
+  #store-cats { display: flex; gap: 6px; padding: 2px 24px 12px; overflow-x: auto; flex: none; }
+  #store-cats::-webkit-scrollbar { height: 6px; }
+  #store-cats::-webkit-scrollbar-thumb { border-width: 0; }
+  #store-cats button { flex: none; padding: 5px 12px; border-radius: 999px; font: 13px var(--display); background: #f3ede4; color: var(--ink-soft); }
+  #store-cats button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .shop-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr; }
+  #store[data-detail="1"] .shop-body { grid-template-columns: 1fr 360px; }
+  #store-grid { overflow: auto; padding: 4px 24px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; align-content: start; }
+  #store-grid > .muted, #more { grid-column: 1 / -1; }
+  .card { display: grid; grid-template-columns: 52px 1fr; grid-template-rows: 1fr auto; column-gap: 12px; row-gap: 10px; background: var(--card); border-radius: 22px; padding: 14px; box-shadow: 0 3px 10px rgba(74,58,46,.10); cursor: pointer; border: 3px solid transparent; transition: transform .15s, box-shadow .15s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(74,58,46,.16); }
+  .card.sel { border-color: var(--teal); }
+  .card h3 { margin: 0; font: 17px var(--display); font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .by { margin: 0; font-size: 12px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .desc { margin: 6px 0 0; font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .card footer { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .body { min-width: 0; }
+  .logo { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; overflow: hidden; background: var(--c, #fff); box-shadow: inset 0 0 0 1px rgba(0,0,0,.06); }
+  .logo img { width: 100%; height: 100%; object-fit: contain; }
+  .logo.gen { background: hsl(var(--h) 70% 82%); color: hsl(var(--h) 45% 28%); font: 24px var(--display); }
+  .logo.big { width: 76px; height: 76px; border-radius: 22px; font-size: 34px; }
+  .pop { display: inline-flex; align-items: center; gap: 3px; font: 12px var(--display); color: var(--ink-soft); }
+  .pop svg { width: 13px; height: 13px; color: #d99a00; }
+  .act { display: inline-flex; align-items: center; gap: 4px; padding: 6px 13px; border-radius: 12px; font: 14px var(--display); white-space: nowrap; }
+  .act svg { width: 15px; height: 15px; }
+  .act.get { background: var(--leaf); color: #fff; }
+  .act.owned { background: var(--leaf-soft); color: var(--leaf); }
+  .act.owned .off { display: none; }
+  .act.owned:hover .on, .act.owned:focus-visible .on { display: none; }
+  .act.owned:hover .off, .act.owned:focus-visible .off { display: inline; }
+  .act.owned:hover { background: var(--coral-soft); color: var(--coral); }
+  .act.armed { background: var(--coral); color: #fff; }
+  .act.busy { background: #f3ede4; color: var(--ink-soft); }
+  #more { justify-self: center; padding: 10px 22px; border-radius: 14px; background: var(--card); font: 15px var(--display); box-shadow: 0 3px 10px rgba(74,58,46,.10); }
+  #store-detail { display: none; overflow: auto; border-left: 2px dashed var(--line); padding: 20px 22px 24px; position: relative; }
+  #store[data-detail="1"] #store-detail { display: block; }
+  #store-detail .x { position: absolute; right: 16px; top: 16px; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: #f3ede4; }
+  #store-detail h2 { margin: 12px 0 0; font: 24px var(--display); font-weight: normal; }
+  #store-detail .by { margin: 2px 0 12px; font-size: 13px; color: var(--ink-soft); }
+  #store-detail .act { padding: 9px 18px; font-size: 16px; }
+  #store-detail .long { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+  #store-detail h4 { margin: 14px 0 4px; font: 15px var(--display); font-weight: normal; }
+  #store-detail ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--ink-soft); }
+  #store-detail dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; margin: 14px 0; }
+  #store-detail dt { color: var(--ink-soft); }
+  #store-detail dd { margin: 0; overflow-wrap: anywhere; }
+  #store-detail .link { display: inline-flex; align-items: center; gap: 6px; color: var(--teal-deep); font: 14px var(--display); }
+  .confirm { margin: 12px 0; padding: 12px; border-radius: 16px; background: var(--coral-soft); font-size: 13px; }
+  .confirm pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #fff; border-radius: 10px; padding: 8px; font-size: 12px; }
+  .confirm footer { display: flex; gap: 6px; }
+  .confirm footer button { border-radius: 12px; padding: 7px 14px; font: 14px var(--display); }
   [hidden] { display: none !important; }
 </style>
 <script type="importmap">
@@ -174,6 +291,10 @@
   <h1 data-icon="out">Agent Office</h1>
   <div id="clock"><span id="clock-icon"></span><div><span id="clock-time"></span><span id="clock-date"></span></div></div>
   <ol id="floor-list"></ol>
+  <div class="shelf">
+    <button id="open-bag" data-icon="bag">스킬 가방</button>
+    <button id="open-store" data-icon="shop">스킬 상점</button>
+  </div>
   <button id="add-floor" data-icon="plus">새 층 올리기</button>
 </nav>
 
@@ -190,17 +311,45 @@
 <form id="order" data-mode="outside">
   <div class="head">
     <label id="to" for="task"></label>
+    <button type="button" id="use-skill" data-icon="spark">스킬 불러오기</button>
     <div id="approve-mode" role="group" aria-label="이 층의 승인 방식">
       <button type="button" data-auto="0" data-icon="hand" title="파일 수정·명령 실행 전에 매번 물어봐요">직접 승인</button>
       <button type="button" data-auto="1" data-icon="bolt" title="묻지 않고 바로 허락해요">자동 승인</button>
     </div>
   </div>
+  <div id="picked" hidden></div>
   <textarea id="task" rows="2" autocomplete="off"></textarea>
   <div class="acts">
     <button id="stop" type="button" data-icon="stop">멈추기</button>
     <button id="go" data-icon="send">맡기기</button>
   </div>
 </form>
+
+<aside id="bag" hidden aria-label="스킬 가방">
+  <header><h2 id="bag-title">스킬 가방</h2><button id="bag-close" class="icon-btn" aria-label="닫기"></button></header>
+  <div class="tabs" role="tablist"><button data-cli="claude" role="tab">Claude <span class="n"></span></button><button data-cli="codex" role="tab">Codex <span class="n"></span></button></div>
+  <label class="search"><input id="bag-q" placeholder="스킬 이름이나 설명으로 찾기" autocomplete="off"></label>
+  <div id="bag-list"></div>
+  <button id="bag-shop" data-icon="shop">상점에서 더 찾아보기</button>
+</aside>
+
+<div id="store" hidden>
+  <section class="shop" role="dialog" aria-label="스킬 상점">
+    <header class="shop-head">
+      <div class="sign"><span class="awning"></span><h2>스킬 상점</h2><p>Claude · Codex 스킬과 플러그인을 구경하고 바로 담아 가세요</p></div>
+      <button id="store-refresh" class="icon-btn" title="목록 새로고침" aria-label="목록 새로고침"></button>
+      <button id="store-close" class="icon-btn" aria-label="상점 닫기"></button>
+    </header>
+    <div class="shop-bar">
+      <div class="tabs" role="tablist"><button data-cli="claude" role="tab">Claude <span class="n"></span></button><button data-cli="codex" role="tab">Codex <span class="n"></span></button></div>
+      <label class="search"><input id="store-q" placeholder="무엇을 찾으세요? 예: figma, 테스트, 보안" autocomplete="off"></label>
+      <select id="store-sort" aria-label="정렬"><option value="pop">인기순</option><option value="name">이름순</option></select>
+      <span id="store-count"></span>
+    </div>
+    <nav id="store-cats" aria-label="분류"></nav>
+    <div class="shop-body"><div id="store-grid"></div><aside id="store-detail"></aside></div>
+  </section>
+</div>
 
 <div id="toasts" aria-live="polite"></div>
 
