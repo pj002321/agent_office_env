@@ -21,6 +21,11 @@ main (app/main.cjs, Electron)     ▼
    hook (app/hook.cjs) ──HTTP 127.0.0.1 + token──► main ──► "ask" card ──► allow/deny back to the CLI
 ```
 
+Each floor keeps its claude session id in floors.json and resumes it on every order. Headless `-p` has no
+`/resume` or `/clear`, so the app handles them: app/history.cjs reads the CLI's own transcripts
+(`~/.claude/projects/<folder>/<session>.jsonl`) to refill the journal on launch and to list past sessions;
+`/resume` (or 지난 대화) switches the floor's session, `/new` starts a fresh one.
+
 ## OfficeEvent
 
 `{ agent: 'lead' | <Agent tool_use id>, kind, text }`

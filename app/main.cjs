@@ -9,6 +9,7 @@ const path = require('path');
 const readline = require('readline');
 const { parse, describe } = require('./stream.cjs');
 const skills = require('./skills.cjs');
+const history = require('./history.cjs');
 
 // Tools that change things → 대표 must approve. Read-only tools run freely.
 const ASK_TOOLS = 'Bash|Edit|MultiEdit|Write|NotebookEdit|WebFetch|WebSearch';
@@ -110,6 +111,19 @@ ipcMain.handle('remove-floor', (_, id) => {
   floors = floors.filter(f => f.id !== id);
   save();
   return view();
+});
+// past conversations: the floor resumes f.session; /resume picks another, /new starts fresh
+ipcMain.handle('history', (_, id) => { const f = floors.find(x => x.id === id); return f ? history.read(f.path, f.session).slice(-60) : []; });
+ipcMain.handle('sessions', (_, id) => {
+  const f = floors.find(x => x.id === id);
+  return f ? history.list(f.path).map(s => ({ ...s, current: s.id === f.session })) : [];
+});
+ipcMain.handle('set-session', (_, id, session) => {
+  const f = floors.find(x => x.id === id);
+  if (!f || runs.has(id) || (session && !history.SESSION_ID.test(session))) return false;
+  f.session = session || null;
+  save();
+  return true;
 });
 ipcMain.on('run', (_, floorId, task) => run(floorId, task));
 ipcMain.on('stop', (_, floorId) => runs.get(floorId)?.kill());

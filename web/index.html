@@ -103,7 +103,18 @@
   .visit { margin-left: auto; color: var(--teal-deep); padding-right: 8px !important; }
   .chip { font: 12px var(--display); background: #fff3dc; color: #8a5a3c; border-radius: 8px; padding: 1px 7px; margin-right: 4px; }
   #journal { flex: 0 1 auto; max-height: 46vh; min-height: 0; display: flex; flex-direction: column; background: rgba(255,255,255,.94); border-radius: 22px; box-shadow: var(--shadow); padding: 14px 6px 8px 16px; }
-  #journal-title { font: 18px var(--display); margin: 0 0 8px; }
+  #journal-title { font: 18px var(--display); margin: 0; }
+  #journal > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 8px 8px 0; }
+  #talks-btn { display: inline-flex; align-items: center; gap: 4px; font: 13px var(--display); color: var(--teal-deep); background: #e1f4f1; border-radius: 12px; padding: 4px 10px; }
+  #talks-btn svg, #talks svg { width: 14px; height: 14px; stroke-width: 2.2; }
+  #talks { list-style: none; margin: 0 8px 8px 0; padding: 6px; max-height: min(260px, 30vh); overflow: auto; background: #fbf6ee; border-radius: 14px; flex: none; }
+  #journal #talks li { display: block; padding: 0; border: 0; }
+  #talks button { width: 100%; text-align: left; display: grid; grid-template-columns: auto 1fr; column-gap: 6px; align-items: center; padding: 7px 9px; border-radius: 10px; }
+  #talks button:hover { background: var(--card); }
+  #talks button.on { background: var(--leaf-soft); }
+  #talks b { grid-column: 1 / -1; font: 14px var(--display); font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #talks button:has(svg) b { grid-column: 2; }
+  #talks small { grid-column: 1 / -1; font-size: 11px; color: var(--ink-soft); }
   #journal ol { list-style: none; margin: 0; padding: 0 8px 0 0; overflow: auto; font-size: 13px; }
   #journal li { display: grid; grid-template-columns: 40px 1fr; column-gap: 6px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
   #journal li.none { display: block; color: var(--ink-soft); border: 0; padding: 4px 0; }
@@ -305,7 +316,7 @@
 
 <aside id="side">
   <div id="asks" aria-live="polite"></div>
-  <section id="journal"><h2 id="journal-title">건물 전체 일지</h2><ol></ol></section>
+  <section id="journal"><header><h2 id="journal-title">건물 전체 일지</h2><button id="talks-btn" data-icon="read" hidden>지난 대화</button></header><ul id="talks" hidden></ul><ol></ol></section>
 </aside>
 
 <form id="order" data-mode="outside">

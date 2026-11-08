@@ -16,6 +16,7 @@ async function loadFloors(list) {
   floors = list || await office.floors();
   world.setFloors(floors);
   for (const f of floors) if (f.busy) world.handle({ floor: f.id, kind: 'busy' });
+  await Promise.all(floors.filter(f => !pastLoaded.has(f.id)).map(f => loadPast(f.id)));
   renderPanel();
   renderOrder();
 }
@@ -57,7 +58,7 @@ $('#open-bag').onclick = () => shop.openBag();
 $('#open-store').onclick = () => shop.openStore();
 $('#empty-add').onclick = addFloor;
 
-world.onFloorChange(() => { renderPanel(); renderOrder(); renderLog(); renderAsks(); });
+world.onFloorChange(() => { $('#talks').hidden = true; renderPanel(); renderOrder(); renderLog(); renderAsks(); });
 
 // ---------- OS clock ----------
 const PART = h => h < 5 ? '한밤' : h < 7 ? '새벽' : h < 11 ? '아침' : h < 13 ? '점심' : h < 17.5 ? '오후' : h < 19.8 ? '저녁' : '밤';
@@ -88,7 +89,7 @@ function renderOrder() {
   for (const b of document.querySelectorAll('#approve-mode button')) b.setAttribute('aria-pressed', String((b.dataset.auto === '1') === f.auto));
   $('#plaque-path').textContent = f.path;
   $('#to').textContent = `${st.lead} 팀장에게`;
-  $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 끝나면 이어서 맡길 수 있어요` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘';
+  $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 끝나면 이어서 맡길 수 있어요` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘  ·  /resume 지난 대화  ·  /new 새 대화';
 }
 // skills picked from the bag ride in front of the order as `/skill` (Claude runs them as slash commands)
 let picked = [];
@@ -102,6 +103,9 @@ $('#order').onsubmit = e => {
   e.preventDefault();
   const id = world.currentFloor(), t = $('#task').value.trim();
   if (!id || (!t && !picked.length) || world.floorState(id).busy) return;
+  // claude's own /resume and /clear only exist in its interactive mode, so the app handles them
+  if (!picked.length && /^\/(resume|continue)$/i.test(t)) { $('#task').value = ''; return openTalks(); }
+  if (!picked.length && /^\/(new|clear)$/i.test(t)) { $('#task').value = ''; return switchTalk(null); }
   // ponytail: one slash skill per order reaches Claude as a command; extra picks are named in the text
   const order = picked.length ? `${picked[0]} ${picked.length > 1 ? `(${picked.slice(1).join(', ')} 스킬도 활용해줘) ` : ''}${t}`.trim() : t;
   $('#task').value = '';
@@ -158,12 +162,43 @@ function renderLog() {
   const cur = world.currentFloor();
   const rows = logs.filter(l => !cur || l.floor === cur).slice(-80).reverse();
   $('#journal-title').textContent = cur ? '이 층의 일지' : '건물 전체 일지';
+  $('#talks-btn').hidden = !cur;
+  const today = new Date().toDateString();
   $('#journal ol').innerHTML = rows.length ? rows.map(l => {
     const fi = floors.findIndex(f => f.id === l.floor);
-    return `<li data-tone="${l.tone}"><time>${l.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false })}</time>
+    return `<li data-tone="${l.tone}"><time>${l.at.toDateString() === today ? l.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : `${l.at.getMonth() + 1}/${l.at.getDate()}`}</time>
       <span class="who">${cur ? '' : `<span class="chip">${fi + 2}F</span>`}${esc(l.who)}</span><span class="txt">${ICON[l.icon] || ''}${esc(l.text)}</span></li>`;
   }).join('') : `<li class="none">${cur ? '아직 조용해요. 아래에서 팀장에게 일을 맡겨 보세요.' : '층에 들어가 일을 맡기면 여기에 기록돼요.'}</li>`;
 }
+
+// ---------- past conversations (from claude's own transcripts) ----------
+const pastLoaded = new Set();
+async function loadPast(id) {
+  pastLoaded.add(id);
+  const lead = world.floorState(id)?.lead || '팀장';
+  for (const m of await office.history(id)) logs.push({ floor: id, at: new Date(m.at), tone: m.me ? 'order' : 'past',
+    who: m.me ? '나' : lead, rank: m.me ? '대표' : '팀장', text: (m.me ? '지시: ' : '') + (m.text.length > 300 ? m.text.slice(0, 300) + '…' : m.text) });
+  logs.sort((a, b) => a.at - b.at);
+}
+async function openTalks() {
+  const id = world.currentFloor();
+  if (!id) return;
+  const list = await office.sessions(id);
+  const day = s => new Date(s).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  $('#talks').innerHTML = `<li><button data-session="">${ICON.plus}<b>새 대화 시작</b></button></li>` + list.map(s =>
+    `<li><button data-session="${s.id}" class="${s.current ? 'on' : ''}"><b>${esc(s.title)}</b><small>${day(s.at)} · 메시지 ${s.count}${s.current ? ' · 지금 이어가는 중' : ''}</small></button></li>`).join('');
+  $('#talks').hidden = false;
+}
+async function switchTalk(session) {
+  const id = world.currentFloor();
+  if (!id || !await office.setSession(id, session)) return;
+  $('#talks').hidden = true;
+  for (let i = logs.length; i--;) if (logs[i].floor === id) logs.splice(i, 1);
+  if (session) await loadPast(id);
+  log({ floor: id, who: '나', rank: '대표', text: session ? '지난 대화를 이어서 해요' : '새 대화를 시작해요. 팀장이 이전 내용은 기억하지 않아요', tone: 'order' });
+}
+$('#talks-btn').onclick = () => $('#talks').hidden ? openTalks() : ($('#talks').hidden = true);
+$('#talks').onclick = e => { const b = e.target.closest('[data-session]'); if (b) switchTalk(b.dataset.session || null); };
 
 // ---------- events ----------
 office.on(e => {

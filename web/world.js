@@ -686,7 +686,10 @@ export const floorState = id => {
 
 // ---------- floors in / out ----------
 export function setFloors(list) {
-  for (const [id, f] of floors) if (!list.some(x => x.id === id)) { building.remove(f.g); floors.delete(id); }
+  for (const [id, f] of floors) if (!list.some(x => x.id === id)) {
+    f.g.traverse(o => o.element?.remove());   // CSS2D signs/labels keep their DOM when an ancestor is removed
+    building.remove(f.g); floors.delete(id);
+  }
   order = list.map(x => x.id);
   list.forEach((info, i) => {
     let f = floors.get(info.id);
