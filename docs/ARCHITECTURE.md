@@ -35,8 +35,14 @@ main (app/main.cjs, Electron)     ▼
 | ask / answer | PreToolUse hook | walks to 대표, hops with a red bubble until approved |
 | done | result | 팀장 reports to 대표 |
 | exit | process close | resets the floor |
+| auto | PreToolUse hook on a 자동 승인 floor | allowed at once; mint bubble, no walk |
+| auth | `claude` run failed with a login error | "Claude 권한 받아와" quest toast |
 
 The renderer only knows OfficeEvents, so Codex, terminal-session watching, and demo playback plug in as new producers.
+
+## Login
+
+At startup the app runs `claude auth status` and `codex login status` (after `where`/`which`). Missing or signed-out CLIs get a quest toast whose button opens the CLI's own login (`claude auth login` / `codex login`) in a new terminal, then polls until signed in.
 
 ## Roadmap
 

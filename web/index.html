@@ -15,7 +15,7 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
-  body { font: 15px/1.5 var(--body); color: var(--ink); background: linear-gradient(#93d3f2 0%, #c4ebf7 48%, #ffe4cf 100%); caret-color: var(--leaf); }
+  body { font: 15px/1.5 var(--body); color: var(--ink); background: linear-gradient(var(--sky-top, #93d3f2) 0%, var(--sky-mid, #c4ebf7) 48%, var(--sky-bot, #ffe4cf) 100%); caret-color: var(--leaf); }
   ::selection { background: var(--butter); color: var(--ink); }
   ::-webkit-scrollbar { width: 10px; } ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; border: 3px solid var(--card); }
   button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
@@ -35,6 +35,8 @@
   .bubble.on { opacity: 1; transform: none; }
   .bubble.ask { background: var(--coral); color: #fff; font-weight: 700; }
   .bubble.ask::after { border-top-color: var(--coral); }
+  .bubble.auto { background: var(--leaf-soft); color: #1f6b3a; }
+  .bubble.auto::after { border-top-color: var(--leaf-soft); }
   .doing, .bubble { display: flex; align-items: center; gap: 4px; }
   .doing svg, .bubble svg, .ask p svg, #journal .txt svg { width: 14px; height: 14px; stroke-width: 2.2; vertical-align: -2px; margin-right: 4px; }
   .bubble { display: block; }
@@ -53,6 +55,11 @@
   #elevator { position: fixed; left: 16px; top: 16px; bottom: 16px; width: 228px; display: flex; flex-direction: column; background: var(--teal); border-radius: 26px; padding: 14px 12px; box-shadow: var(--shadow); color: #fff; }
   #elevator h1 { font: 22px var(--display); margin: 2px 6px 12px; letter-spacing: .01em; display: flex; align-items: center; gap: 8px; }
   #elevator h1 svg { width: 22px; height: 22px; }
+  #clock { display: flex; align-items: center; gap: 10px; margin: 0 2px 12px; padding: 8px 12px; border-radius: 16px; background: var(--teal-deep); }
+  #clock-icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--butter); color: #8a5a00; flex: none; }
+  #clock[data-icon="moon"] #clock-icon { background: #3b4a8a; color: #fff3c4; }
+  #clock-time { font: 22px var(--display); display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  #clock-date { font-size: 12px; opacity: .85; display: block; }
   #floor-list { list-style: none; margin: 0; padding: 4px; flex: 1; overflow: hidden auto; display: flex; flex-direction: column; gap: 6px; background: var(--teal-deep); border-radius: 18px; }
   #floor-list li { position: relative; }
   .floor-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 7px; border-radius: 14px; color: #fff; text-align: left; transition: background .15s; }
@@ -113,7 +120,13 @@
   /* ---------- order bar ---------- */
   #order { position: fixed; left: calc(260px + (100vw - 606px) / 2); bottom: 18px; translate: -50% 0; width: min(640px, calc(100vw - 650px)); background: var(--card); border-radius: 24px; padding: 10px 10px 10px 18px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 10px; }
   #order::after { content: ''; position: absolute; left: 34px; top: -9px; border: 10px solid transparent; border-top: 0; border-bottom-color: var(--card); }
-  #to { grid-column: 1 / -1; font: 14px var(--display); color: var(--teal-deep); margin-bottom: 2px; }
+  #order .head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+  #to { font: 14px var(--display); color: var(--teal-deep); }
+  #approve-mode { display: flex; background: #f3ede4; border-radius: 12px; padding: 3px; gap: 2px; }
+  #approve-mode button { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9px; color: var(--ink-soft); font: 13px var(--display); white-space: nowrap; }
+  #approve-mode button svg { width: 15px; height: 15px; }
+  #approve-mode button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(74,58,46,.18); }
+  #approve-mode button[data-auto="1"][aria-pressed="true"] { background: var(--butter); color: #5a3b00; }
   #task { font: 15px/1.45 var(--body); color: var(--ink); border: 0; outline: 0; resize: none; background: none; padding: 4px 0; height: 46px; }
   #task::placeholder { color: #a8968a; }
   #order .acts { display: flex; gap: 6px; }
@@ -129,6 +142,22 @@
   #empty h2 { font: 24px var(--display); margin: 0 0 6px; }
   #empty p { margin: 0 0 16px; color: var(--ink-soft); }
   #empty button { background: var(--leaf); color: #fff; border-radius: 16px; padding: 12px 20px; font: 17px var(--display); display: inline-flex; gap: 6px; align-items: center; }
+  /* ---------- toasts ---------- */
+  #toasts { position: fixed; top: 96px; left: calc(260px + (100vw - 606px) / 2); translate: -50% 0; width: min(440px, calc(100vw - 650px)); display: flex; flex-direction: column; gap: 10px; z-index: 5; }
+  .toast { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 14px 16px; box-shadow: var(--shadow); animation: drop .45s cubic-bezier(.2,1.4,.4,1); transition: opacity .25s, translate .25s; }
+  .toast.bye { opacity: 0; translate: 0 -12px; }
+  @keyframes drop { from { translate: 0 -24px; opacity: 0; } }
+  .toast .badge { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: var(--brass); color: #6b4a00; box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); }
+  .toast .badge svg { width: 24px; height: 24px; }
+  .toast.waiting .badge { animation: wiggle 1.2s infinite ease-in-out; }
+  @keyframes wiggle { 50% { rotate: -14deg; } }
+  .toast.done .badge { background: var(--leaf); color: #fff; }
+  .toast.info .badge { background: var(--butter); }
+  .toast h3 { margin: 2px 0 2px; font: 18px var(--display); font-weight: normal; }
+  .toast p { margin: 0; font-size: 14px; color: var(--ink-soft); overflow-wrap: anywhere; }
+  .toast footer { display: flex; gap: 6px; margin-top: 10px; }
+  .toast footer:empty { display: none; }
+  .toast footer button { border-radius: 12px; padding: 7px 14px; font: 15px var(--display); }
   [hidden] { display: none !important; }
 </style>
 <script type="importmap">
@@ -143,6 +172,7 @@
 
 <nav id="elevator" aria-label="층 이동">
   <h1 data-icon="out">Agent Office</h1>
+  <div id="clock"><span id="clock-icon"></span><div><span id="clock-time"></span><span id="clock-date"></span></div></div>
   <ol id="floor-list"></ol>
   <button id="add-floor" data-icon="plus">새 층 올리기</button>
 </nav>
@@ -158,13 +188,21 @@
 </aside>
 
 <form id="order" data-mode="outside">
-  <label id="to" for="task"></label>
+  <div class="head">
+    <label id="to" for="task"></label>
+    <div id="approve-mode" role="group" aria-label="이 층의 승인 방식">
+      <button type="button" data-auto="0" data-icon="hand" title="파일 수정·명령 실행 전에 매번 물어봐요">직접 승인</button>
+      <button type="button" data-auto="1" data-icon="bolt" title="묻지 않고 바로 허락해요">자동 승인</button>
+    </div>
+  </div>
   <textarea id="task" rows="2" autocomplete="off"></textarea>
   <div class="acts">
     <button id="stop" type="button" data-icon="stop">멈추기</button>
     <button id="go" data-icon="send">맡기기</button>
   </div>
 </form>
+
+<div id="toasts" aria-live="polite"></div>
 
 <div id="hint">층을 누르면 안으로 들어가 팀장에게 일을 맡길 수 있어요</div>
 

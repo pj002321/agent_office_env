@@ -13,5 +13,11 @@ export const ICON = {
   search: svg('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>'),
   web: svg('<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.5 2.5 13.5 0 16M12 4c-2.5 2.5-2.5 13.5 0 16"/>'),
   todo: svg('<path d="M9 7h11M9 12h11M9 17h11M4 7h1M4 12h1M4 17h1"/>'),
+  sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+  moon: svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>'),
+  key: svg('<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/>'),
+  check: svg('<path d="M5 12.5l4.5 4.5L19 7"/>'),
+  hand: svg('<path d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 14.5a1.6 1.6 0 0 1 2.6-1.8L8 15"/>'),
+  bolt: svg('<path d="M13 3L5 13h6l-1 8 8-10h-6z"/>'),
   tool: svg('<path d="M14 6a4 4 0 0 0 4.5 5.5L11 19a2 2 0 0 1-3-3l7.5-7.5A4 4 0 0 0 14 6z"/>'),
 };

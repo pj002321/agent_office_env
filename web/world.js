@@ -35,7 +35,8 @@ function fit() {
 addEventListener('resize', fit);
 fit();
 
-scene.add(new THREE.HemisphereLight(0xfff4e0, 0x9fc9a8, 1.6));
+const hemi = new THREE.HemisphereLight(0xfff4e0, 0x9fc9a8, 1.6);
+scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff1dc, 2.2);
 sun.position.set(18, 30, 22);
 sun.castShadow = true;
@@ -142,18 +143,22 @@ for (let i = 0; i < 70; i++) {
   if (Math.abs(x) < 9 && z < 10) continue;
   add(island, sphere(0.14, 8, 6), FLOWER[i % 4], x, 0.12, z, { shadow: false });
 }
+const lampMat = new THREE.MeshBasicMaterial({ color: 0xf3ecd2 });
+const haloMat = new THREE.MeshBasicMaterial({ color: 0xffd97a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
 function lamp(x, z) {
   add(island, new THREE.CylinderGeometry(0.07, 0.09, 2.4, 8), 0x4a5a6a, x, 1.2, z);
-  add(island, sphere(0.28), new THREE.MeshBasicMaterial({ color: 0xfff1b8 }), x, 2.5, z, { shadow: false });
+  add(island, sphere(0.28), lampMat, x, 2.5, z, { shadow: false });
+  add(island, sphere(0.9), haloMat, x, 2.5, z, { shadow: false });
 }
 lamp(-3.6, 9); lamp(3.6, 9);
 add(island, rbox(2.2, 0.16, 0.6, 0.06), 0xc98f5a, 5.5, 0.55, 12.2);                 // bench
 add(island, rbox(2.2, 0.6, 0.12, 0.05), 0xc98f5a, 5.5, 0.9, 11.95);
 
 const clouds = [];
+const cloudMat = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: ramp, transparent: true, opacity: 0.95 });
 for (let i = 0; i < 7; i++) {
   const c = new THREE.Group();
-  const mat = new THREE.MeshToonMaterial({ color: 0xffffff, gradientMap: ramp, transparent: true, opacity: 0.95 });
+  const mat = cloudMat;
   for (let k = 0; k < 4; k++) add(c, sphere(1.4 + (k % 2) * 0.6), mat, k * 1.4 - 2, (k % 2) * 0.6, 0, { shadow: false });
   c.position.set(-60 + i * 19, 15 + (i % 3) * 4, -42 + (i % 2) * 10);
   c.userData.speed = 0.6 + (i % 3) * 0.3;
@@ -252,8 +257,14 @@ function makeFloor(info, index) {
   for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++)
     add(g, rbox(0.22, 0.42, 0.3, 0.03), [0xff8f7a, 0x8fc0ef, 0xffd45e, 0x8fd3b6][(r + k) % 4], -2 + k * 0.32 + r * 0.05, 0.4 + r * 0.58, -FD / 2 + 0.62);
   add(g, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 28).rotateX(Math.PI / 2), 0xffffff, 1.6, 2.4, -FD / 2 + 0.13, { outline: 0.06 });   // clock
-  add(g, rbox(0.05, 0.26, 0.03, 0.01), 0x5a4636, 1.6, 2.5, -FD / 2 + 0.18, { shadow: false });
-  add(g, rbox(0.2, 0.05, 0.03, 0.01), 0x5a4636, 1.68, 2.4, -FD / 2 + 0.18, { shadow: false });
+  const hand = len => {   // pivots at the clock center; rotation.z is set from the OS clock
+    const pivot = new THREE.Group();
+    pivot.position.set(1.6, 2.4, -FD / 2 + 0.18);
+    add(pivot, rbox(0.05, len, 0.03, 0.01), 0x5a4636, 0, len / 2 - 0.03, 0, { shadow: false });
+    g.add(pivot);
+    return pivot;
+  };
+  const clockHands = { h: hand(0.2), m: hand(0.3) };
   add(g, rbox(1.6, 0.9, 0.6, 0.08), 0xfff3dc, 5.6, 0.45, -FD / 2 + 0.4);                        // coffee counter
   add(g, rbox(0.5, 0.6, 0.4, 0.08), 0x6d5a4a, 5.3, 1.2, -FD / 2 + 0.4);
   add(g, new THREE.CylinderGeometry(0.1, 0.08, 0.16, 12), 0xffffff, 6.1, 0.98, -FD / 2 + 0.4);
@@ -339,7 +350,10 @@ function makeFloor(info, index) {
   alertObj.position.set(-FW / 2 - 0.9, FH * 0.5, FD / 2);
   g.add(alertObj);
 
-  const f = { id: info.id, info, g, hinge, glass, doorL, doorR, ceoDesk, leadDesk, staffDesks, signEl, signObj, alertObj,
+  const ceiling = new THREE.PointLight(0xffd6a0, 0, 18, 1);   // room lights, switched on at night
+  ceiling.position.set(0, H - 0.2, 0.5);
+  g.add(ceiling);
+  const f = { id: info.id, info, g, hinge, glass, clockHands, ceiling, doorL, doorR, ceoDesk, leadDesk, staffDesks, signEl, signObj, alertObj,
               agents: new Map(), live: new Set(), asks: new Map(), busy: false, lift: 0, open: 0, base: 0, made: 0 };
   f.me = villager(f, '나', '대표', 'cat', ceoDesk.seat);
   sitAt(f.me, ceoDesk);
@@ -464,6 +478,68 @@ async function elevator(f, open) {
   await tween(350, t => { f.doorL.position.z = from + (to - from) * t; f.doorR.position.z = 2 * LANE - f.doorL.position.z; });
 }
 
+
+// ---------- day & night (follows the OS clock) ----------
+// keyframes by hour: page sky gradient, light colors/intensities, and how "night" it is (0..1)
+const NIGHT = { top: '#1d2552', mid: '#2e3b72', bot: '#55507f', hemi: [0x9fb0e0, 0x3a4a60, 0.95], sun: [0xa9b8ff, 0.55], night: 1 };
+const DAY = { top: '#93d3f2', mid: '#c4ebf7', bot: '#ffe4cf', hemi: [0xfff4e0, 0x9fc9a8, 1.6], sun: [0xfff1dc, 2.2], night: 0 };
+const SKY = [
+  { h: 0, ...NIGHT }, { h: 4.8, ...NIGHT },
+  { h: 6.5, top: '#f5ae8c', mid: '#fbcfb2', bot: '#ffe8cc', hemi: [0xffe2c8, 0x9fb59a, 1.2], sun: [0xffc59a, 1.4], night: 0.25 },
+  { h: 9, ...DAY }, { h: 16.5, ...DAY },
+  { h: 18.3, top: '#f39a7c', mid: '#f8c09f', bot: '#ffd9ae', hemi: [0xffd6bd, 0x9faf95, 1.2], sun: [0xffad78, 1.5], night: 0.3 },
+  { h: 19.8, top: '#3b3f7a', mid: '#6b5b92', bot: '#c08ba2', hemi: [0xb3a6d8, 0x4a5262, 0.9], sun: [0xc9b3ff, 0.7], night: 0.8 },
+  { h: 21, ...NIGHT }, { h: 24, ...NIGHT },
+];
+const sky = { night: 0, hour: 12 };
+const starPos = [];
+for (let k = 0; k < 260; k++) {
+  const a = k * 2.399, y = 0.25 + (k * 0.618 % 1) * 0.7, r = Math.sqrt(1 - y * y) * 150;
+  starPos.push(Math.cos(a) * r, y * 150, Math.sin(a) * r - 30);
+}
+const stars = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3)),
+  new THREE.PointsMaterial({ color: 0xfff6d8, size: 1.3, transparent: true, opacity: 0, depthWrite: false }));
+scene.add(stars);
+const moon = add(scene, sphere(4, 28, 20), new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0 }), -17, 25, -26, { shadow: false });
+let hourOverride = null, lastSky = -1;
+export const debugHour = h => { hourOverride = h; lastSky = -1; };   // testing hook: force a time of day
+const mixHex = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
+function tickSky() {
+  const d = new Date();
+  const h = hourOverride ?? d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
+  if (lastSky >= 0 && Math.abs(h - lastSky) < 1 / 360) return;   // recompute every ~10s of clock time
+  lastSky = h;
+  sky.hour = h;
+  const i = SKY.findIndex((k, j) => SKY[j + 1] && h >= k.h && h < SKY[j + 1].h);
+  const a = SKY[i], b = SKY[i + 1], t = (h - a.h) / (b.h - a.h);
+  const n = sky.night = a.night + (b.night - a.night) * t;
+  const css = document.documentElement.style;
+  for (const key of ['top', 'mid', 'bot']) css.setProperty(`--sky-${key}`, '#' + mixHex(a[key], b[key], t).getHexString());
+  hemi.color.copy(mixHex(a.hemi[0], b.hemi[0], t));
+  hemi.groundColor.copy(mixHex(a.hemi[1], b.hemi[1], t));
+  hemi.intensity = a.hemi[2] + (b.hemi[2] - a.hemi[2]) * t;
+  sun.color.copy(mixHex(a.sun[0], b.sun[0], t));
+  sun.intensity = a.sun[1] + (b.sun[1] - a.sun[1]) * t;
+  // the sun arcs east → west between 6h and 19h; at night the light comes from the moon's side
+  const arc = Math.min(1, Math.max(0, (h - 6) / 13)) * Math.PI;
+  if (n < 0.7) sun.position.set(Math.cos(arc) * 30, 10 + Math.sin(arc) * 24, 22);
+  else sun.position.set(-18, 28, 18);
+  stars.material.opacity = Math.max(0, n - 0.35) / 0.65;
+  moon.material.opacity = Math.max(0, n - 0.3) / 0.7;
+  cloudMat.color.copy(mixHex(0xffffff, 0x8f95c4, n));
+  lampMat.color.copy(mixHex(0xf3ecd2, 0xffe27a, n));
+  haloMat.opacity = n * 0.35;
+  for (const f of floors.values()) {
+    paintGlass(f);
+    f.ceiling.intensity = n * 6;
+    f.clockHands.h.rotation.z = -((h % 12) / 12) * Math.PI * 2;
+    f.clockHands.m.rotation.z = -(h % 1) * Math.PI * 2;
+  }
+  onSky?.(sky);
+}
+let onSky = null;
+export const onSkyChange = cb => onSky = cb;
+
 // ---------- events → behavior ----------
 // returns a short log line (or null) so the UI can record it
 export function handle(e) {
@@ -532,6 +608,12 @@ export function handle(e) {
       });
       return { who, text: `승인 요청 · ${e.text}`, tone: 'ask', icon: e.icon };
     }
+    case 'auto': {   // 자동 승인 floor: a quick thumbs-up instead of walking to 대표
+      const who = a || lead;
+      act(who, () => { iconText(who.bubble, e.icon, `자동 승인 · ${e.text}`); who.bubble.classList.add('on', 'auto'); clearTimeout(who.sayT);
+        who.sayT = setTimeout(() => who.bubble.classList.remove('on', 'auto'), 1800); });
+      return { who, text: `자동 승인 · ${e.text}`, tone: 'ok', icon: e.icon };
+    }
     case 'answer': {
       const who = f.asks.get(e.id);
       f.asks.delete(e.id);
@@ -574,9 +656,15 @@ export function handle(e) {
 }
 function setBusy(f, on) {
   f.busy = on;
-  f.glass.color.setHex(on ? 0xffe7a3 : 0xcfefff);
-  f.glass.opacity = on ? 0.62 : 0.42;
+  paintGlass(f);
   refreshSign(f);
+}
+// windows: sky glass by day, warm lamplight at night; working floors glow brighter
+const GLASS_DAY = new THREE.Color(0xcfefff), GLASS_BUSY = new THREE.Color(0xffe7a3), GLASS_NIGHT = new THREE.Color(0xffc75a);
+function paintGlass(f) {
+  const n = sky.night;
+  f.glass.color.copy(f.busy ? GLASS_BUSY : GLASS_DAY).lerp(GLASS_NIGHT, n * (f.busy ? 1 : 0.55));
+  f.glass.opacity = (f.busy ? 0.62 : 0.42) + n * (f.busy ? 0.33 : 0.2);
 }
 function refreshAlert(f) {
   f.alertObj.element.textContent = f.asks.size > 1 ? `!${f.asks.size}` : '!';
@@ -609,6 +697,7 @@ export function setFloors(list) {
     refreshAlert(f);
   });
   roofBase = LOBBY + order.length * FH;
+  lastSky = -1;   // repaint new floors for the current time of day
   if (current && !floors.has(current)) current = null;
   layout();
   if (!current) frameOutside(600);
@@ -739,7 +828,7 @@ renderer.setAnimationLoop(() => {
       act(lead, async () => {
         lead.typing = false;
         await go(lead, V(5.2, -2.6), Math.PI);
-        say(lead, ['커피 한 잔 ☕', '오늘 날씨 좋다~', '음~ 좋은 향기'][Math.random() * 3 | 0], 1800);
+        say(lead, (sky.night > 0.5 ? ['별이 예쁘다…', '오늘도 수고했어요', '야식 먹을까?'] : ['커피 한 잔 ☕', '오늘 날씨 좋다~', '음~ 좋은 향기'])[Math.random() * 3 | 0], 1800);
         await sleep(2600);
         if (!f.busy) await go(lead, lead.desk.seat);
       });
@@ -751,6 +840,7 @@ renderer.setAnimationLoop(() => {
     s.scale.setScalar(0.5 + k * 1.2);
     s.material.opacity = 0.75 * (1 - k);
   }
+  tickSky();
   for (const c of clouds) { c.position.x += c.userData.speed * dt; if (c.position.x > 70) c.position.x = -70; }
   sway.forEach((g, i) => g.rotation.z = Math.sin(t * 0.9 + i) * 0.025);
   controls.update();

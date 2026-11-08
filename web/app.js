@@ -55,6 +55,19 @@ $('#empty-add').onclick = addFloor;
 
 world.onFloorChange(() => { renderPanel(); renderOrder(); renderLog(); renderAsks(); });
 
+// ---------- OS clock ----------
+const PART = h => h < 5 ? '한밤' : h < 7 ? '새벽' : h < 11 ? '아침' : h < 13 ? '점심' : h < 17.5 ? '오후' : h < 19.8 ? '저녁' : '밤';
+let night = false;
+world.onSkyChange(sky => { night = sky.night > 0.5; tickClock(sky.hour); });
+function tickClock(hour) {
+  const d = new Date();
+  $('#clock-time').textContent = d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+  $('#clock-date').textContent = `${d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })} · ${PART(hour ?? d.getHours() + d.getMinutes() / 60)}`;
+  const icon = night ? 'moon' : 'sun';
+  if ($('#clock').dataset.icon !== icon) { $('#clock').dataset.icon = icon; $('#clock-icon').innerHTML = ICON[icon]; }
+}
+setInterval(() => tickClock(), 1000);
+
 // ---------- order bar ----------
 function renderOrder() {
   const id = world.currentFloor();
@@ -68,6 +81,7 @@ function renderOrder() {
     return;
   }
   $('#plaque-name').textContent = `${floors.indexOf(f) + 2}F · ${f.name}`;
+  for (const b of document.querySelectorAll('#approve-mode button')) b.setAttribute('aria-pressed', String((b.dataset.auto === '1') === f.auto));
   $('#plaque-path').textContent = f.path;
   $('#to').textContent = `${st.lead} 팀장에게`;
   $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 끝나면 이어서 맡길 수 있어요` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘';
@@ -85,6 +99,17 @@ $('#task').addEventListener('keydown', e => {
 });
 $('#stop').onclick = () => world.currentFloor() && office.stop(world.currentFloor());
 $('#leave').onclick = () => world.enter(null);
+$('#approve-mode').onclick = async e => {
+  const b = e.target.closest('button[data-auto]'), id = world.currentFloor();
+  if (!b || !id) return;
+  const auto = b.dataset.auto === '1';
+  floors = await office.setAuto(id, auto);
+  renderOrder();
+  const f = floors.find(x => x.id === id);
+  log({ floor: id, who: '나', rank: '대표', text: auto ? '이 층은 이제 자동 승인이에요' : '이 층은 이제 직접 승인해요', tone: 'order' });
+  if (auto) toast({ id: 'auto-' + id, icon: 'bolt', tone: 'info', title: `${f.name}: 자동 승인 켜짐`,
+    body: '파일 수정과 명령 실행을 묻지 않고 허락해요. 믿을 수 있는 프로젝트에서만 켜 두세요.', ttl: 5000 });
+};
 
 // ---------- approvals ----------
 function renderAsks() {
@@ -133,8 +158,70 @@ office.on(e => {
   if (e.kind === 'answer') asks.delete(e.id);
   if (['ask', 'answer'].includes(e.kind)) renderAsks();
   if (['busy', 'exit', 'ask', 'answer'].includes(e.kind)) { renderPanel(); renderOrder(); }
+  if (e.kind === 'auth') loginQuest(e.cli, 'login');
 });
 
 await world.ready();
 await loadFloors();
 renderLog();
+tickClock();
+office.authCheck().then(st => { for (const [cli, s] of Object.entries(st)) if (s !== 'ok') loginQuest(cli, s); });
+
+// ---------- toasts: login "quests" and notices ----------
+const NAME = { claude: 'Claude', codex: 'Codex' };
+function toast({ id, icon, tone = 'quest', title, body, actions = [], ttl = 0 }) {
+  let el = document.getElementById('toast-' + id);
+  if (!el) {
+    el = document.createElement('section');
+    el.id = 'toast-' + id;
+    el.setAttribute('role', 'status');
+    $('#toasts').append(el);
+  }
+  el.className = `toast ${tone}`;
+  el.innerHTML = `<span class="badge">${ICON[icon] || ''}</span><div><h3></h3><p></p><footer></footer></div>`;
+  el.querySelector('h3').textContent = title;
+  el.querySelector('p').textContent = body;
+  for (const [label, cls, fn] of actions) {
+    const b = document.createElement('button');
+    b.className = cls; b.textContent = label; b.onclick = fn;
+    el.querySelector('footer').append(b);
+  }
+  clearTimeout(el.ttl);
+  if (ttl) el.ttl = setTimeout(() => closeToast(id), ttl);
+}
+function closeToast(id) {
+  const el = document.getElementById('toast-' + id);
+  if (!el) return;
+  el.classList.add('bye');
+  setTimeout(() => el.remove(), 260);
+}
+
+const quests = new Map();   // cli → polling timer
+function loginQuest(cli, state) {
+  const name = NAME[cli] || cli;
+  if (state === 'missing') return toast({ id: cli, icon: 'key', tone: 'quest', title: `${name}가 아직 입사 전이에요`,
+    body: `이 컴퓨터에서 ${cli} 명령을 찾지 못했어요. ${name} CLI를 설치하면 ${name} 직원이 출근할 수 있어요.`,
+    actions: [['알겠어요', 'no', () => closeToast(cli)]] });
+  toast({ id: cli, icon: 'key', title: `${name} 권한 받아와!`,
+    body: `${name} 직원이 출근하려면 출입증이 필요해요. 터미널에서 ${name}에 로그인하면 바로 받아올게요.`,
+    actions: [['출입증 받으러 가기', 'yes', () => startQuest(cli)], ['나중에', 'no', () => closeToast(cli)]] });
+}
+async function startQuest(cli) {
+  const name = NAME[cli] || cli;
+  const cmd = await office.authLogin(cli);
+  toast({ id: cli, icon: 'key', tone: 'quest waiting', title: `${name} 출입증 받는 중…`,
+    body: `새로 열린 터미널 창에서 로그인을 마쳐 주세요. 끝나면 알아서 확인할게요. (명령: ${cmd})`,
+    actions: [['그만두기', 'no', () => { clearInterval(quests.get(cli)); closeToast(cli); }]] });
+  clearInterval(quests.get(cli));
+  const started = Date.now();
+  quests.set(cli, setInterval(async () => {
+    const st = (await office.authCheck([cli]))[cli];
+    if (st === 'ok') {
+      clearInterval(quests.get(cli));
+      toast({ id: cli, icon: 'check', tone: 'done', title: `${name} 출입증 획득!`, body: `이제 ${name} 직원이 출근할 수 있어요.`, ttl: 5000 });
+    } else if (Date.now() - started > 5 * 60 * 1000) {
+      clearInterval(quests.get(cli));
+      loginQuest(cli, st);
+    }
+  }, 4000));
+}

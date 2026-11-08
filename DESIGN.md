@@ -18,6 +18,10 @@ colors:
   sky-top: "#93d3f2"
   sky-mid: "#c4ebf7"
   sky-peach: "#ffe4cf"
+  night-top: "#1d2552"
+  night-mid: "#2e3b72"
+  night-bot: "#55507f"
+  lamplight: "#ffc75a"
 typography:
   display:
     fontFamily: "Jua, sans-serif"
@@ -120,10 +124,13 @@ A full pastel world held together by a single warm-brown ink.
 - **Soft Bark** (ink-soft): secondary text, timestamps.
 - **Card White** (card) and **Dashed Line** (line): panels and journal dividers.
 - **Plaque Wood** (plaque-wood): the floor title plaque only.
-- **Sky** (sky-top → sky-mid → sky-peach): the page background gradient behind the transparent WebGL canvas.
+- **Sky** (sky-top → sky-mid → sky-peach): the page background gradient behind the transparent WebGL canvas, driven at runtime through `--sky-top/mid/bot`.
+- **Night** (night-top → night-mid → night-bot) and **Lamplight** (lamplight): the night sky and the warm window glow; the sky passes through a peach dawn (6:30) and a coral sunset (18:20) between them.
 
 ### Named Rules
 **The Coral Means You Rule.** Coral appears only when 대표 has to decide something. Never use it for decoration or errors that need no action.
+
+**The Clock Is Real Rule.** The sky, sun, moon, stars, street lamps, window glow and the wall clocks all follow the OS clock. Never fake time of day for decoration.
 
 **The Status Lives in the Building Rule.** Working floors glow (window glass #ffe7a3 at 62%), idle floors stay sky glass (#cfefff at 42%). Don't add separate stat cards for what the building already shows.
 
@@ -172,6 +179,15 @@ White card with a 3px coral border and a pop-in animation. It shows the floor ch
 
 ### Villager Label (in-world)
 A white name pill with a rank chip (대표 butter, 팀장 periwinkle, 대리 mint, 사원 pink), a mint "doing" chip with a tool icon, and a speech bubble that springs in. The ask bubble is coral.
+
+### Clock
+Top of the elevator panel: a sun or moon disc (butter by day, indigo by night), the OS time in Jua 22px, then date and part of day (새벽 / 아침 / 점심 / 오후 / 저녁 / 밤).
+
+### Approval Mode Toggle
+A segmented control in the order bar header: 직접 승인 (white when on) and 자동 승인 (butter when on). It is set per floor. In auto mode the villager shows a mint "자동 승인 · …" bubble instead of walking to 대표.
+
+### Quest Toast
+Login and notice toasts drop in at the top center as a quest card: a round brass badge with a key, a Jua title in quest voice ("Codex 권한 받아와!"), one body line, then actions. While waiting, the badge wiggles; on success it turns leaf green with a check ("출입증 획득!"). The app only opens the CLI's own login in a terminal and never handles credentials.
 
 ### Floor Sign (exterior)
 A white pill on the building's right side: brass floor disc, project name and a state pill (쉬는 중 / 작업 중 / 승인 대기). Clicking it enters the floor.
