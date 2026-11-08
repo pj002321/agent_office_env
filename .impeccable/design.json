@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-08T17:30:00+09:00",
+  "title": "Design System: Agent Office",
+  "extensions": {
+    "colorMeta": {
+      "leaf": { "role": "primary", "displayName": "Sprout Leaf", "tonalRamp": ["#0f2e18", "#174424", "#1f5b30", "#287a41", "#3e9a58", "#6fbd83", "#a9dbb4", "#e3f4e4"] },
+      "teal": { "role": "secondary", "displayName": "Elevator Teal", "tonalRamp": ["#0c2b28", "#13403b", "#1c625b", "#25786f", "#3c978c", "#6fbcb2", "#a9dcd5", "#e1f4f1"] },
+      "brass": { "role": "secondary", "displayName": "Brass Button", "tonalRamp": ["#4a3a0e", "#6b5416", "#8f7020", "#b8912d", "#d9b04a", "#f2cf72", "#f8e3ab", "#fdf5dd"] },
+      "coral": { "role": "tertiary", "displayName": "Alarm Coral", "tonalRamp": ["#4a140b", "#6e1f12", "#9a2e1d", "#d9533d", "#ee7a66", "#f6a597", "#fbcfc6", "#ffe6df"] },
+      "butter": { "role": "tertiary", "displayName": "Butter" },
+      "ink": { "role": "neutral", "displayName": "Bark Ink" },
+      "plaque-wood": { "role": "neutral", "displayName": "Plaque Wood" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "App title, empty-state heading." },
+      "title": { "displayName": "Title", "purpose": "Floor names, plaque, buttons, villager names." },
+      "body": { "displayName": "Body", "purpose": "Orders, approval text, journal." },
+      "label": { "displayName": "Label", "purpose": "Rank, floor and state chips." }
+    },
+    "shadows": [
+      { "name": "float", "value": "0 6px 18px rgba(74,58,46,.16), 0 2px 4px rgba(74,58,46,.10)", "purpose": "Every floating panel, card, bubble and sign." },
+      { "name": "button-inset", "value": "inset 0 -3px 0 rgba(0,0,0,.12)", "purpose": "Brass buttons and floor-number discs." }
+    ],
+    "motion": [
+      { "name": "spring-pop", "value": "cubic-bezier(.2,1.4,.4,1)", "purpose": "Speech bubbles and approval cards springing in." },
+      { "name": "camera-fly", "value": "easeInOutCubic 1000-1100ms", "purpose": "Entering or leaving a floor; the facade swings open and upper floors lift." }
+    ]
+  },
+  "components": [
+    { "name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "The one action color: 맡기기, 승인.",
+      "html": "<button class=\"ds-btn-primary\">맡기기</button>",
+      "css": ".ds-btn-primary { background: #287a41; color: #fff; border: 0; border-radius: 16px; padding: 11px 18px; font: 16px Jua, sans-serif; cursor: pointer; transition: transform .15s; } .ds-btn-primary:hover { transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 3px solid #ffd45e; outline-offset: 2px; }" },
+    { "name": "Quiet Button", "kind": "button", "refersTo": "button-quiet", "description": "Stop and reject.",
+      "html": "<button class=\"ds-btn-quiet\">거절</button>",
+      "css": ".ds-btn-quiet { background: #f3ede4; color: #4a3a2e; border: 0; border-radius: 16px; padding: 11px 18px; font: 16px Jua, sans-serif; cursor: pointer; } .ds-btn-quiet:focus-visible { outline: 3px solid #ffd45e; outline-offset: 2px; }" },
+    { "name": "Elevator Floor Button", "kind": "nav", "refersTo": "floor-button", "description": "One floor in the elevator panel with status lamp.",
+      "html": "<div class=\"ds-shaft\"><button class=\"ds-floor\"><span class=\"ds-num\">3F</span><span class=\"ds-nm\">web-shop</span><span class=\"ds-lamp\"></span></button><button class=\"ds-floor on\"><span class=\"ds-num\">2F</span><span class=\"ds-nm\">probe</span><span class=\"ds-lamp ask\"></span></button></div>",
+      "css": ".ds-shaft { background: #1c625b; border-radius: 18px; padding: 4px; width: 204px; display: flex; flex-direction: column; gap: 6px; } .ds-floor { display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 7px; border: 0; border-radius: 14px; background: none; color: #fff; font: 16px Jua, sans-serif; cursor: pointer; } .ds-floor:hover { background: rgba(255,255,255,.12); } .ds-floor.on { background: #fff; color: #4a3a2e; } .ds-num { width: 36px; height: 36px; border-radius: 50%; background: #f2cf72; color: #4a3a2e; display: grid; place-items: center; font-size: 15px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); } .ds-nm { flex: 1; text-align: left; } .ds-lamp { width: 11px; height: 11px; border-radius: 50%; background: #8ff0a4; box-shadow: 0 0 0 3px rgba(143,240,164,.35); } .ds-lamp.ask { background: #ff9c88; box-shadow: 0 0 0 3px rgba(255,156,136,.4); }" },
+    { "name": "Approval Card", "kind": "card", "refersTo": "approval-card", "description": "A staff member asking 대표 for permission.",
+      "html": "<article class=\"ds-ask\"><header><span class=\"ds-chip\">3F web-shop</span><b>모모 사원</b>의 승인 요청</header><p>npm install 실행</p><footer><button class=\"ds-yes\">승인</button><button class=\"ds-no\">거절</button></footer></article>",
+      "css": ".ds-ask { background: #fff; border: 3px solid #d9533d; border-radius: 20px; padding: 13px 15px; width: 300px; box-shadow: 0 6px 18px rgba(74,58,46,.16), 0 2px 4px rgba(74,58,46,.10); color: #4a3a2e; font: 14px 'Gowun Dodum', sans-serif; } .ds-ask b { font: 16px Jua, sans-serif; font-weight: normal; } .ds-chip { font: 12px Jua, sans-serif; background: #fff3dc; color: #8a5a3c; border-radius: 8px; padding: 1px 7px; margin-right: 6px; } .ds-ask footer { display: flex; gap: 6px; margin-top: 10px; } .ds-yes, .ds-no { border: 0; border-radius: 12px; padding: 7px 16px; font: 15px Jua, sans-serif; cursor: pointer; } .ds-yes { background: #287a41; color: #fff; } .ds-no { background: #f3ede4; color: #4a3a2e; }" },
+    { "name": "Villager Label", "kind": "custom", "description": "In-world name pill with rank chip and doing chip.",
+      "html": "<div class=\"ds-tag\"><div class=\"ds-doing\">package.json 읽는 중</div><div class=\"ds-name\"><b>마루</b><i>팀장</i></div></div>",
+      "css": ".ds-tag { display: flex; flex-direction: column; align-items: center; gap: 4px; } .ds-doing { font: 12px 'Gowun Dodum', sans-serif; color: #1f6b3a; background: #e3f4e4; border-radius: 8px; padding: 0 7px; } .ds-name { display: flex; gap: 4px; align-items: center; background: #fff; border-radius: 10px; padding: 1px 4px 1px 8px; font: 13px Jua, sans-serif; box-shadow: 0 2px 5px rgba(74,58,46,.18); } .ds-name b { font-weight: normal; } .ds-name i { font: 11px Jua, sans-serif; font-style: normal; background: #cddcfb; border-radius: 7px; padding: 0 5px; }" }
+  ],
+  "narrative": {
+    "northStar": "The Picture-Book Tower",
+    "overview": "The whole product is one cozy building seen in cross-section, like the cutaway pages of a children's picture book. You read status from the building itself: glowing windows mean a team is working, a coral balloon means someone is waiting for you. Step inside a floor and its front wall swings open like a dollhouse, revealing toon-shaded animal villagers at their desks.",
+    "keyCharacteristics": ["3D world first; UI panels float above it on the left, right and bottom edges.", "Toon shading (3-step ramp) with warm-brown ink outlines on villagers and trees.", "Candy-pastel floors (mint, butter, peach, lilac, sky) on a white trim frame.", "Rounded everything: RoundedBox furniture, pill chips, 14–26px UI radii.", "Korean copy in a playful office-life voice."],
+    "rules": [
+      { "name": "The Coral Means You Rule", "body": "Coral appears only when 대표 has to decide something. Never use it for decoration or errors that need no action.", "section": "colors" },
+      { "name": "The Status Lives in the Building Rule", "body": "Working floors glow (window glass #ffe7a3 at 62%), idle floors stay sky glass (#cfefff at 42%). Don't add separate stat cards for what the building already shows.", "section": "colors" }
+    ],
+    "dos": ["Do use the stroke icons from web/icons.js (24 grid, 2.2–2.4 stroke, round caps) for tool kinds and actions.", "Do keep villagers toon-shaded with ink outlines and blush, built from rounded primitives.", "Do give every new floor the next pastel in the theme rotation."],
+    "donts": ["Don't use emoji as icons in chips, journal or buttons; emoji are fine only inside a villager's spoken line.", "Don't reuse characters, art or UI from existing games; the cozy tone is pinned, the art is ours.", "Don't use coral for anything that doesn't need 대표's decision."]
+  }
+}

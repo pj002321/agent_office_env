@@ -8,15 +8,16 @@ const oneLine = (s, n) => {
 };
 const base = p => String(p || '').split(/[\\/]/).pop();
 
+// → { icon, text }: icon is a kind the renderer draws (read/edit/run/search/web/todo/tool)
 function describe(name, input = {}) {
   switch (name) {
-    case 'Read': return `📖 ${base(input.file_path)} 읽는 중`;
-    case 'Edit': case 'MultiEdit': case 'Write': case 'NotebookEdit': return `✏️ ${base(input.file_path || input.notebook_path)} 고치는 중`;
-    case 'Bash': return `🔧 ${oneLine(input.description || input.command, 40)}`;
-    case 'Glob': case 'Grep': return `🔍 ${oneLine(input.pattern, 30)} 찾는 중`;
-    case 'WebFetch': case 'WebSearch': return `🌐 ${oneLine(input.url || input.query, 30)}`;
-    case 'TodoWrite': return '📝 할 일 정리 중';
-    default: return `🔧 ${name}`;
+    case 'Read': return { icon: 'read', text: `${base(input.file_path)} 읽는 중` };
+    case 'Edit': case 'MultiEdit': case 'Write': case 'NotebookEdit': return { icon: 'edit', text: `${base(input.file_path || input.notebook_path)} 고치는 중` };
+    case 'Bash': return { icon: 'run', text: oneLine(input.description || input.command, 40) };
+    case 'Glob': case 'Grep': return { icon: 'search', text: `${oneLine(input.pattern, 30)} 찾는 중` };
+    case 'WebFetch': case 'WebSearch': return { icon: 'web', text: oneLine(input.url || input.query, 30) };
+    case 'TodoWrite': return { icon: 'todo', text: '할 일 정리 중' };
+    default: return { icon: 'tool', text: name };
   }
 }
 
@@ -33,7 +34,7 @@ function parse(m, subs) {
         subs.add(b.id);
         out.push({ agent: b.id, kind: 'hire', boss: who, text: oneLine(b.input?.description, 30), role: b.input?.subagent_type || 'agent' });
       } else {
-        out.push({ agent: who, kind: 'work', text: describe(b.name, b.input), toolUseId: b.id });
+        out.push({ agent: who, kind: 'work', ...describe(b.name, b.input), toolUseId: b.id });
       }
     }
   }

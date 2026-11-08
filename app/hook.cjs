@@ -10,7 +10,7 @@ const reply = ok => process.stdout.write(JSON.stringify({
 let body = '';
 process.stdin.on('data', d => body += d).on('end', () => {
   const req = http.request({ host: '127.0.0.1', port: process.env.OFFICE_PORT, path: '/ask', method: 'POST',
-                             headers: { 'x-office-token': process.env.OFFICE_TOKEN } }, res => {
+                             headers: { 'x-office-token': process.env.OFFICE_TOKEN, 'x-office-floor': process.env.OFFICE_FLOOR || '' } }, res => {
     let r = '';
     res.on('data', d => r += d).on('end', () => reply(r === 'allow'));
   });

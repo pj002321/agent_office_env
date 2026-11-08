@@ -14,12 +14,12 @@ test('lead work, subagent hire → work → leave, done', () => {
     { type: 'user', message: { content: [{ type: 'tool_result', tool_use_id: 'a1' }] } },
     { type: 'result', is_error: false, result: '2 files' },
   ];
-  const ev = lines.flatMap(m => parse(m, subs)).map(e => `${e.agent}:${e.kind}:${e.text || ''}`);
+  const ev = lines.flatMap(m => parse(m, subs)).map(e => `${e.agent}:${e.kind}:${e.icon ? e.icon + ' ' : ''}${e.text || ''}`);
   assert.deepStrictEqual(ev, [
     'lead:start:',
-    'lead:work:📖 notes.md 읽는 중',
+    'lead:work:read notes.md 읽는 중',
     'a1:hire:count files',
-    'a1:work:🔍 * 찾는 중',
+    'a1:work:search * 찾는 중',
     'a1:leave:',
     'lead:done:2 files',
   ]);

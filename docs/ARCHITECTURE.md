@@ -13,7 +13,7 @@ their own locally installed `claude` / `codex` CLIs do the real work, and the of
 ## Flow
 
 ```
-renderer (web/index.html, Three.js)
+renderer (web/index.html + app.js UI, world.js Three.js building)
    ▲ OfficeEvent (IPC)            │ order / approve
 main (app/main.cjs, Electron)     ▼
    spawn: claude -p --output-format stream-json --verbose --settings <PreToolUse hook> [--resume <session>]
@@ -40,9 +40,10 @@ The renderer only knows OfficeEvents, so Codex, terminal-session watching, and d
 
 ## Roadmap
 
-1. ✅ One floor, Claude runner, approvals, subagents (this commit)
-2. Floors per project + elevator, persisted in `%APPDATA%`; watch terminal-launched sessions
+1. ✅ One floor, Claude runner, approvals, subagents
+2. ✅ One building, a floor per project (persisted in `%APPDATA%/agent-office/floors.json`), elevator panel, a runner per floor
+   — next: watch terminal-launched sessions
 3. Codex runner (`codex exec --json`)
-4. Art pass: pastel cozy style, original animal staff
+4. ✅ Art pass: picture-book tower, toon villagers (see DESIGN.md)
 5. Decorate mode (grid furniture, A* walking)
 6. Installer (electron-builder) + download site; check Anthropic commercial terms before release
