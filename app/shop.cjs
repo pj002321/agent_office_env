@@ -33,8 +33,12 @@ const EARN = 10;   // points per order
 const REWARDS = [20, 20, 30, 30, 50, 50, 100];   // 출석체크 day 1..7, then the board starts over
 const SLOTS = ['building', 'wall', 'floor'];
 
+const FLOOR_ID = /^[\w-]{1,64}$/;
+// building is one for the whole tower; wall/floor/furniture are per floor in rooms[floorId].
+// equip.wall/floor + furniture are what a floor shows until it's decorated on its own (older saves keep their look).
 const fresh = () => ({ points: 0, owned: ITEMS.filter(i => !i.price).map(i => i.id),
-  equip: { building: 'house', wall: 'wall-theme', floor: 'floor-wood' }, furniture: [], attend: { day: 0, last: null } });
+  equip: { building: 'house', wall: 'wall-theme', floor: 'floor-wood' }, furniture: [], rooms: {}, attend: { day: 0, last: null } });
+const room = (s, fid) => s.rooms[fid] ?? { wall: s.equip.wall, floor: s.equip.floor, furniture: [...s.furniture] };
 function load(raw) {   // fills gaps in an older or partial save
   const s = fresh();
   if (!raw || typeof raw !== 'object') return s;
@@ -46,13 +50,19 @@ function load(raw) {   // fills gaps in an older or partial save
     if (s.owned.includes(id) && ITEMS.find(i => i.id === id).slot === slot) s.equip[slot] = id;
   }
   if (Array.isArray(raw.furniture)) s.furniture = raw.furniture.filter(id => s.owned.includes(id));
+  for (const [fid, r] of Object.entries(raw.rooms && typeof raw.rooms === 'object' ? raw.rooms : {})) {
+    if (!FLOOR_ID.test(fid) || !r || typeof r !== 'object') continue;
+    const fit = (id, slot) => s.owned.includes(id) && ITEMS.find(i => i.id === id).slot === slot;
+    s.rooms[fid] = { wall: fit(r.wall, 'wall') ? r.wall : s.equip.wall, floor: fit(r.floor, 'floor') ? r.floor : s.equip.floor,
+                     furniture: Array.isArray(r.furniture) ? r.furniture.filter(id => fit(id, 'furniture')) : [] };
+  }
   const a = raw.attend;
   if (a && Number.isInteger(a.day) && a.day >= 0 && a.day <= REWARDS.length && (a.last === null || /^\d{4}-\d{2}-\d{2}$/.test(a.last)))
     s.attend = { day: a.day, last: a.last };
   return s;
 }
 const earn = s => { s.points += EARN; return s; };
-function buy(s, id) {
+function buy(s, id, fid) {
   const it = ITEMS.find(i => i.id === id);
   if (!it) return { ok: false, message: '없는 물건이에요.' };
   if (s.owned.includes(id)) return { ok: false, message: '이미 가지고 있어요.' };
@@ -60,14 +70,18 @@ function buy(s, id) {
   if (s.points < it.price) return { ok: false, message: `포인트가 ${it.price - s.points}P 모자라요.` };
   s.points -= it.price;
   s.owned.push(id);
-  equip(s, id, true);   // bought it → wear it
+  if (it.slot === 'building' || fid) equip(s, id, true, fid);   // bought it → wear it (on the floor being decorated)
   return { ok: true };
 }
-function equip(s, id, on = true) {
+// owned items work on every floor; interior slots need the floor id
+function equip(s, id, on = true, fid) {
   const it = ITEMS.find(i => i.id === id);
   if (!it || !s.owned.includes(id)) return { ok: false, message: '먼저 사야 해요.' };
-  if (it.slot === 'furniture') s.furniture = on ? [...new Set([...s.furniture, id])] : s.furniture.filter(x => x !== id);
-  else s.equip[it.slot] = id;
+  if (it.slot === 'building') { s.equip.building = id; return { ok: true }; }
+  if (!FLOOR_ID.test(fid || '')) return { ok: false, message: '꾸밀 층을 먼저 골라 주세요.' };
+  const r = s.rooms[fid] = room(s, fid);
+  if (it.slot === 'furniture') r.furniture = on ? [...new Set([...r.furniture, id])] : r.furniture.filter(x => x !== id);
+  else r[it.slot] = id;
   return { ok: true };
 }
 
@@ -89,4 +103,4 @@ function attend(s, today) {
   return { ok: true, day, points };
 }
 
-module.exports = { ITEMS, PACKS, EARN, REWARDS, FREE_CHARGE, fresh, load, earn, buy, equip, charge, attend };
+module.exports = { ITEMS, PACKS, EARN, REWARDS, FREE_CHARGE, fresh, load, room, earn, buy, equip, charge, attend };

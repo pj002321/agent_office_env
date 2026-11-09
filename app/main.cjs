@@ -187,6 +187,7 @@ ipcMain.handle('add-floor', async () => {
 ipcMain.handle('remove-floor', (_, id) => {
   runs.get(id)?.kill();
   floors = floors.filter(f => f.id !== id);
+  if (wallet.rooms[id]) { delete wallet.rooms[id]; saveWallet(); }
   save();
   return view();
 });
@@ -262,8 +263,12 @@ ipcMain.handle('music-add', async () => {
 });
 ipcMain.handle('music-remove', (_, id) => music.remove(MUSIC, id));
 ipcMain.handle('wallet', () => walletView());
-for (const [ch, fn] of [['shop-buy', shop.buy], ['shop-equip', shop.equip], ['shop-charge', shop.charge]])
-  ipcMain.handle(ch, (_, id, on) => { const r = fn(wallet, String(id), on !== false); if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; });
+// fid: the floor being decorated (interior items); only floors that exist
+const fidOf = fid => floors.some(f => f.id === fid) ? fid : undefined;
+const shopCall = r => { if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; };
+ipcMain.handle('shop-buy', (_, id, fid) => shopCall(shop.buy(wallet, String(id), fidOf(fid))));
+ipcMain.handle('shop-equip', (_, id, on, fid) => shopCall(shop.equip(wallet, String(id), on !== false, fidOf(fid))));
+ipcMain.handle('shop-charge', (_, id) => shopCall(shop.charge(wallet, String(id))));
 ipcMain.handle('attend', () => { const r = shop.attend(wallet, localDate()); if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; });
 ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
 

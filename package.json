@@ -2,13 +2,29 @@
   "name": "agent-office",
   "version": "0.1.0",
   "private": true,
+  "description": "A cozy 3D office where your own AI coding CLIs work, one floor per project",
+  "author": "JaeseongHeo",
+  "license": "MIT",
   "main": "app/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.cjs"
+    "test": "node --test test/*.test.cjs",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "io.github.pj002321.agentoffice",
+    "productName": "Agent Office",
+    "files": ["app/**", "web/**", "package.json"],
+    "directories": { "output": "dist" },
+    "win": { "target": "nsis", "artifactName": "AgentOffice-Setup.${ext}" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "mac": { "target": { "target": "dmg", "arch": "universal" }, "category": "public.app-category.developer-tools",
+             "artifactName": "AgentOffice-mac.${ext}" },
+    "publish": null
   },
   "devDependencies": {
-    "electron": "^45.2.3"
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
   },
   "dependencies": {
     "@fontsource/gowun-dodum": "^5.3.0",

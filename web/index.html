@@ -32,14 +32,15 @@
   .bubble { position: relative; max-width: 240px; background: var(--card); border-radius: 14px; padding: 6px 11px; font-size: 13px; line-height: 1.4; box-shadow: var(--shadow);
             opacity: 0; transform: translateY(6px) scale(.9); transition: opacity .2s, transform .25s cubic-bezier(.2,1.4,.4,1); }
   .bubble::after { content: ''; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: var(--card); }
-  .bubble.on { opacity: 1; transform: none; }
+  .bubble.on { opacity: 1; transform: none; pointer-events: auto; }   /* scrollable while shown */
   .bubble.ask { background: var(--coral); color: #fff; font-weight: 700; }
   .bubble.ask::after { border-top-color: var(--coral); }
   .bubble.auto { background: var(--leaf-soft); color: #1f6b3a; }
   .bubble.auto::after { border-top-color: var(--leaf-soft); }
   .doing, .bubble { display: flex; align-items: center; gap: 4px; }
   .doing svg, .bubble svg, .ask p svg, #journal .txt svg { width: 14px; height: 14px; stroke-width: 2.2; vertical-align: -2px; margin-right: 4px; }
-  .bubble { display: block; }
+  .bubble { display: block; max-width: 300px; overflow-wrap: anywhere; }
+  .bubble .said { display: block; max-height: 9.8em; overflow-y: auto; overscroll-behavior: contain; }
   .doing { font-size: 12px; color: #1f6b3a; background: rgba(227, 244, 228, .92); border-radius: 8px; padding: 0 7px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
   .doing:empty { display: none; }
   .floor-sign { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 18px; padding: 4px 10px 4px 4px; box-shadow: var(--shadow); font: 15px var(--display); transition: transform .2s; }
@@ -273,7 +274,9 @@
   .shop-bar { display: flex; align-items: center; gap: 10px; padding: 14px 24px 8px; }
   .shop-bar .tabs { flex: none; }
   .shop-bar .search { flex: 1; }
-  #store-sort { border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 14px var(--display); color: var(--ink); background: #fffdf8; }
+  #deco-floor-pick { display: flex; align-items: center; gap: 8px; margin-left: auto; font: 14px var(--display); color: var(--ink-soft); }
+  #deco-floor-pick[hidden] { display: none; }
+  #store-sort, #deco-floor { border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 14px var(--display); color: var(--ink); background: #fffdf8; }
   #store-count { font: 14px var(--display); color: var(--ink-soft); min-width: 56px; text-align: right; }
   #store-cats { display: flex; gap: 6px; padding: 2px 24px 12px; overflow-x: auto; flex: none; }
   #store-cats::-webkit-scrollbar { height: 6px; }
@@ -408,7 +411,7 @@
 <script type="importmap">
 { "imports": {
   "three": "../node_modules/three/build/three.module.js",
-  "three/addons/": "../node_modules/three/examples/jsm/"
+  "three/addons/": "./vendor/"
 } }
 </script>
 </head>
@@ -490,6 +493,7 @@
     </header>
     <div class="shop-bar">
       <div class="tabs" role="tablist"><button data-tab="building" role="tab">건물</button><button data-tab="wall" role="tab">벽지</button><button data-tab="floor" role="tab">바닥</button><button data-tab="furniture" role="tab">가구</button><button data-tab="packs" role="tab">포인트 충전</button></div>
+      <label id="deco-floor-pick" hidden>꾸밀 층 <select id="deco-floor"></select></label>
     </div>
     <div id="deco-grid"></div>
   </section>

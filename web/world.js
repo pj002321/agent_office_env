@@ -143,7 +143,8 @@ const FLOOR_TEX = {
   }, [3, 2]),
 };
 const LOOK_FACE = { small: 0xd98b6a, tower: 0x8fb8dc };   // house keeps each floor's THEMES face
-let look = { building: 'house', wall: 'wall-theme', floor: 'floor-wood', furniture: [] };
+// building is tower-wide; base = interior for floors not decorated on their own; rooms[floorId] = that floor's interior
+let look = { building: 'house', base: { wall: 'wall-theme', floor: 'floor-wood', furniture: [] }, rooms: {} };
 
 // ---------- tweens ----------
 const tweens = new Set();
@@ -343,10 +344,11 @@ function makeFurniture(g) {
   return { aquarium: aq, arcade: ar, vending: vm, lights: li };
 }
 function applyLook(f) {
+  const r = look.rooms[f.id] || look.base;
   f.faceMat.color.setHex(LOOK_FACE[look.building] ?? f.th.face);
-  f.paperMat.map = WALL_TEX[look.wall] || f.paperTex;
-  f.floorMat.map = FLOOR_TEX[look.floor] || woodTex;
-  for (const k in f.furn) f.furn[k].visible = look.furniture.includes(k);
+  f.paperMat.map = WALL_TEX[r.wall] || f.paperTex;
+  f.floorMat.map = FLOOR_TEX[r.floor] || woodTex;
+  for (const k in f.furn) f.furn[k].visible = r.furniture.includes(k);
 }
 
 // a floor = one project
@@ -579,10 +581,15 @@ function go(a, dest, look, approach = null) {
 }
 const face = (a, b) => a.g.rotation.y = Math.atan2(b.g.position.x - a.g.position.x, b.g.position.z - a.g.position.z);
 function say(a, text, ms = 2600) {
-  a.bubble.textContent = text;
+  const said = document.createElement('span');   // scrolls inside the bubble so the tail isn't clipped
+  said.className = 'said';
+  said.textContent = text;
+  a.bubble.replaceChildren(said);
   a.bubble.classList.add('on');
   clearTimeout(a.sayT);
-  a.sayT = setTimeout(() => a.bubble.classList.remove('on'), ms);
+  // long lines stay up long enough to read (~15 chars/s, max 25s); callers still only wait the scripted ms
+  const read = Math.max(ms, Math.min(25000, 1500 + text.length * 65));
+  a.sayT = setTimeout(() => a.bubble.classList.remove('on'), read);
   return sleep(ms);
 }
 function iconText(el, icon, text) {

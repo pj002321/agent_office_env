@@ -16,10 +16,31 @@ test('earn, buy in tier order, equip, furniture toggle', () => {
   assert.strictEqual(s.equip.building, 'house');
   assert.strictEqual(shop.equip(s, 'aquarium').ok, false);          // not owned
   s.points = 500;
-  assert.ok(shop.buy(s, 'aquarium').ok);
-  assert.deepStrictEqual(s.furniture, ['aquarium']);
-  shop.equip(s, 'aquarium', false);
-  assert.deepStrictEqual(s.furniture, []);
+  assert.ok(shop.buy(s, 'aquarium', 'f1').ok);
+  assert.deepStrictEqual(s.rooms.f1.furniture, ['aquarium']);
+  shop.equip(s, 'aquarium', false, 'f1');
+  assert.deepStrictEqual(s.rooms.f1.furniture, []);
+});
+
+test('interior is per floor; untouched floors keep the old building-wide look', () => {
+  const s = shop.load({ points: 1000, owned: ['wall-night', 'floor-tile', 'arcade'], equip: { wall: 'wall-night' }, furniture: ['arcade'] });
+  assert.deepStrictEqual(shop.room(s, 'a'), { wall: 'wall-night', floor: 'floor-wood', furniture: ['arcade'] });   // old save, untouched
+  assert.ok(shop.equip(s, 'floor-tile', true, 'a').ok);
+  assert.ok(shop.equip(s, 'arcade', false, 'a').ok);
+  assert.deepStrictEqual(shop.room(s, 'a'), { wall: 'wall-night', floor: 'floor-tile', furniture: [] });
+  assert.deepStrictEqual(shop.room(s, 'b'), { wall: 'wall-night', floor: 'floor-wood', furniture: ['arcade'] });  // other floor unchanged
+  assert.strictEqual(shop.equip(s, 'floor-tile', true).ok, false);                  // interior needs a floor
+  assert.ok(shop.buy(s, 'wall-stripe', 'b').ok);                                    // bought on b → worn on b only
+  assert.strictEqual(shop.room(s, 'b').wall, 'wall-stripe');
+  assert.strictEqual(shop.room(s, 'a').wall, 'wall-night');
+  assert.ok(shop.equip(s, 'wall-stripe', true, 'a').ok);                            // owned once, usable on every floor
+  assert.strictEqual(s.points, 1000 - 80);
+});
+
+test('load sanitizes rooms', () => {
+  const s = shop.load({ owned: ['wall-stripe'], rooms: { ok: { wall: 'wall-stripe', floor: 'floor-carpet', furniture: ['arcade', 'x'] },
+    '../bad': { wall: 'wall-stripe' }, n: null } });
+  assert.deepStrictEqual(s.rooms, { ok: { wall: 'wall-stripe', floor: 'floor-wood', furniture: [] } });
 });
 
 test('load sanitizes a tampered or old save', () => {

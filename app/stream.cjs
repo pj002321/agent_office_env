@@ -28,7 +28,7 @@ function parse(m, subs) {
   if (m.type === 'assistant') {
     const who = m.parent_tool_use_id || 'lead';
     for (const b of m.message?.content || []) {
-      if (b.type === 'text' && b.text.trim()) out.push({ agent: who, kind: 'say', text: oneLine(b.text, 60) });
+      if (b.type === 'text' && b.text.trim()) out.push({ agent: who, kind: 'say', text: oneLine(b.text, 4000) });   // bubble scrolls, journal keeps it all
       if (b.type !== 'tool_use' || b.name === 'ToolSearch') continue;
       if (SUB_TOOLS.has(b.name)) {
         subs.add(b.id);
@@ -43,7 +43,7 @@ function parse(m, subs) {
       if (b.type === 'tool_result' && subs.delete(b.tool_use_id)) out.push({ agent: b.tool_use_id, kind: 'leave' });
     }
   }
-  if (m.type === 'result') out.push({ agent: 'lead', kind: 'done', ok: !m.is_error, text: oneLine(m.result, 80) });
+  if (m.type === 'result') out.push({ agent: 'lead', kind: 'done', ok: !m.is_error, text: oneLine(m.result, 4000) });
   return out;
 }
 
