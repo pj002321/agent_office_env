@@ -25,6 +25,17 @@ let win, port;
 // A second launch focuses this window instead (and adds its folder as a floor, if it was given one).
 if (!app.requestSingleInstanceLock()) { app.exit(0); return; }
 
+// macOS apps opened from Finder/Dock get a bare PATH (/usr/bin:/bin...), so `claude` installed via
+// ~/.local/bin, Homebrew or npm isn't found. Borrow the PATH the user's login shell would have.
+if (process.platform === 'darwin') {
+  try {
+    const out = require('child_process').execFileSync(process.env.SHELL || '/bin/zsh', ['-ilc', 'printf "__P__%s__P__" "$PATH"'],
+      { encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'ignore'] });
+    const p = out.match(/__P__(.*)__P__/)?.[1];
+    if (p) process.env.PATH = p;
+  } catch {}
+}
+
 // ---------- floors (persisted) ----------
 const STORE = path.join(app.getPath('userData'), 'floors.json');
 let floors = [];
@@ -232,9 +243,9 @@ ipcMain.handle('auth-check', async (_, names = Object.keys(CLIS)) =>
   Object.fromEntries(await Promise.all(names.map(async n => [n, await checkCli(n)]))));
 ipcMain.handle('auth-login', (_, name) => {
   if (!CLIS[name]) return null;
-  // ponytail: Windows only; macOS needs `osascript -e 'tell app "Terminal" to do script ...'`
-  if (process.platform !== 'win32') return CLIS[name].login;
-  spawn('cmd.exe', ['/c', 'start', '', 'cmd', '/k', CLIS[name].login], { detached: true, stdio: 'ignore' }).unref();
+  // the command is a fixed CLIS entry, never user text
+  if (process.platform === 'win32') spawn('cmd.exe', ['/c', 'start', '', 'cmd', '/k', CLIS[name].login], { detached: true, stdio: 'ignore' }).unref();
+  else if (process.platform === 'darwin') execFile('osascript', ['-e', `tell application "Terminal" to do script "${CLIS[name].login}"`, '-e', 'tell application "Terminal" to activate']);
   return CLIS[name].login;
 });
 
