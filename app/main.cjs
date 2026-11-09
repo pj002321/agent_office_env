@@ -41,7 +41,7 @@ const STORE = path.join(app.getPath('userData'), 'floors.json');
 let floors = [];
 try { floors = JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch {}
 const save = () => fs.writeFileSync(STORE, JSON.stringify(floors, null, 2));
-const view = () => floors.map(({ id, name, path, auto }) => ({ id, name, path, auto: !!auto, busy: runs.has(id) }));
+const view = () => floors.map(({ id, name, path, auto, layout }) => ({ id, name, path, auto: !!auto, layout: layout || {}, busy: runs.has(id) }));
 function addFloor(dir) {
   dir = path.resolve(dir);
   const found = floors.find(f => f.path.toLowerCase() === dir.toLowerCase());
@@ -214,6 +214,16 @@ function answer(id, ok) {
   send({ floor: p.floor, kind: 'answer', id, ok });
 }
 ipcMain.on('answer', (_, floor, id, ok) => answer(id, ok));
+// 배치 mode: { pieceKey: [x, z, rotation] } for decor moved away from its default spot
+const cleanLayout = l => Object.fromEntries(Object.entries(l && typeof l === 'object' ? l : {}).slice(0, 40)
+  .filter(([k, v]) => /^[a-z0-9]{1,20}$/.test(k) && Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) < 20)));
+ipcMain.handle('set-layout', (_, id, layout) => {
+  const f = floors.find(x => x.id === id);
+  if (!f) return false;
+  f.layout = cleanLayout(layout);
+  save();
+  return true;
+});
 ipcMain.handle('set-auto', (_, id, on) => {
   const f = floors.find(x => x.id === id);
   if (!f) return view();

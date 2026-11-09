@@ -377,9 +377,19 @@ function makeFloor(info, index) {
 
   // decor
   add(g, new THREE.CylinderGeometry(3.6, 3.6, 0.02, 40).scale(1.5, 1, 0.75), th.rug, 0, 0.04, 1.5, { shadow: false }).receiveShadow = true;
-  add(g, rbox(1.7, 1.9, 0.45, 0.06), 0xb5835a, -1.4, 0.95, -FD / 2 + 0.35);                     // bookshelf
+  // decor 대표 can move in 배치 mode: each piece is one group at floor level, keyed for the saved layout
+  const movables = {};
+  const movable = (key, x, z, ry = 0) => {
+    const o = new THREE.Group();
+    o.position.set(x, 0, z); o.rotation.y = ry;
+    o.userData.home = [x, z, ry];
+    g.add(o);
+    return movables[key] = o;
+  };
+  const shelf = movable('shelf', -1.4, -FD / 2 + 0.35);                                            // bookshelf
+  add(shelf, rbox(1.7, 1.9, 0.45, 0.06), 0xb5835a, 0, 0.95, 0);
   for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++)
-    add(g, rbox(0.22, 0.42, 0.3, 0.03), [0xff8f7a, 0x8fc0ef, 0xffd45e, 0x8fd3b6][(r + k) % 4], -2 + k * 0.32 + r * 0.05, 0.4 + r * 0.58, -FD / 2 + 0.62);
+    add(shelf, rbox(0.22, 0.42, 0.3, 0.03), [0xff8f7a, 0x8fc0ef, 0xffd45e, 0x8fd3b6][(r + k) % 4], -0.6 + k * 0.32 + r * 0.05, 0.4 + r * 0.58, 0.27);
   const clockFace = add(g, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 28).rotateX(Math.PI / 2), 0xffffff, 1.6, 2.4, -FD / 2 + 0.13, { outline: 0.06 });   // clock
   const hand = len => {   // pivots at the clock center; rotation.z is set from the OS clock
     const pivot = new THREE.Group();
@@ -392,10 +402,11 @@ function makeFloor(info, index) {
   add(g, rbox(1.6, 0.9, 0.6, 0.08), 0xfff3dc, 5.6, 0.45, -FD / 2 + 0.4);                        // coffee counter
   add(g, rbox(0.5, 0.6, 0.4, 0.08), 0x6d5a4a, 5.3, 1.2, -FD / 2 + 0.4);
   add(g, new THREE.CylinderGeometry(0.1, 0.08, 0.16, 12), 0xffffff, 6.1, 0.98, -FD / 2 + 0.4);
-  for (const [x, z] of [[-6.3, 3.9], [6.3, 3.9], [6.4, -0.6]]) {
-    add(g, new THREE.CylinderGeometry(0.3, 0.24, 0.5, 14), 0xe9a07a, x, 0.25, z);
-    add(g, sphere(0.5), 0x7cc58a, x, 0.9, z, { outline: 0.04 });
-  }
+  [[-6.3, 3.9], [6.3, 3.9], [6.4, -0.6]].forEach(([x, z], i) => {
+    const p = movable(`plant${i}`, x, z);
+    add(p, new THREE.CylinderGeometry(0.3, 0.24, 0.5, 14), 0xe9a07a, 0, 0.25, 0);
+    add(p, sphere(0.5), 0x7cc58a, 0, 0.9, 0, { outline: 0.04 });
+  });
 
   // desks
   const desk = (x, z) => {
@@ -431,8 +442,9 @@ function makeFloor(info, index) {
     add(chair, rbox(1, 0.75, 0.25, 0.12), 0xffd45e, 0, 0.6, -0.36);
     g.add(chair);
   }
-  add(g, new THREE.CylinderGeometry(0.04, 0.05, 1.7, 8), 0x8a6a52, -4.4, 0.85, 3.6);
-  add(g, new THREE.CylinderGeometry(0.22, 0.34, 0.36, 16, 1, true), 0xfff3dc, -4.4, 1.82, 3.6);
+  const lampO = movable('lamp', -4.4, 3.6);
+  add(lampO, new THREE.CylinderGeometry(0.04, 0.05, 1.7, 8), 0x8a6a52, 0, 0.85, 0);
+  add(lampO, new THREE.CylinderGeometry(0.22, 0.34, 0.36, 16, 1, true), 0xfff3dc, 0, 1.82, 0);
 
   // facade: hinged on its left edge so it can swing open
   const hinge = new THREE.Group();
@@ -481,7 +493,13 @@ function makeFloor(info, index) {
               agents: new Map(), live: new Set(), asks: new Map(), busy: false, lift: 0, open: 0, base: 0, made: 0,
               crew: new Set(), spots: makeSpots(), clockFace, lifeT: 6 + Math.random() * 8,
               th, paperTex, paperMat: paper, faceMat: face, floorMat: ground, furn: makeFurniture(g) };
+  for (const k of ['aquarium', 'arcade', 'vending']) {   // shop furniture moves too (the wall garland stays on its wall)
+    const o = movables[k] = f.furn[k];
+    o.userData.home = [o.position.x, o.position.z, o.rotation.y];
+  }
+  f.movables = movables;
   applyLook(f);
+  applyLayout(f);
   f.me = villager(f, '나', '대표', 'cat', ceoDesk.seat);
   sitAt(f.me, ceoDesk);
   f.lead = villager(f, LEAD_NAMES[index % LEAD_NAMES.length], '팀장', SPECIES_ORDER[(index + 1) % SPECIES_ORDER.length], leadDesk.seat);
@@ -1014,6 +1032,7 @@ export function setFloors(list) {
     let f = floors.get(info.id);
     if (!f) { f = makeFloor(info, i); floors.set(info.id, f); }
     f.info = info;
+    if (f.id !== editing?.id) applyLayout(f);   // don't yank pieces out from under an active edit
     f.base = LOBBY + i * FH;
     refreshSign(f);
     refreshAlert(f);
@@ -1067,6 +1086,7 @@ function fly(pos, target, ms) {
 
 export async function enter(id) {
   if (id === current) return;
+  if (editing) setEditing(false);   // 배치 mode belongs to one floor
   const prev = current;
   current = id;
   onChange?.(id);
@@ -1093,7 +1113,7 @@ const ray = new THREE.Raycaster();
 let downAt = null;
 renderer.domElement.addEventListener('pointerdown', e => downAt = [e.clientX, e.clientY]);
 renderer.domElement.addEventListener('pointerup', e => {
-  if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+  if (editing || !downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
   ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
   if (current) return poke(floors.get(current));
   const hit = ray.intersectObjects([...floors.values()].map(f => f.g), true)[0];
@@ -1103,6 +1123,103 @@ renderer.domElement.addEventListener('pointerup', e => {
     while (o && o !== f.g) o = o.parent;
     if (o) return enter(f.id);
   }
+});
+
+// ---------- 배치 mode: drag decor around the current floor; the layout is saved per floor ----------
+// ponytail: no collision — pieces can overlap desks and villagers walk through them; add footprints if that bothers anyone
+const TAU = Math.PI * 2, snap = v => Math.round(v * 4) / 4, turn = r => (r % TAU + TAU) % TAU;
+const ROOM_X = FW / 2 - 0.5, ROOM_Z = FD / 2 - 0.45;
+function applyLayout(f) {
+  const saved = f.info.layout || {};
+  for (const [k, o] of Object.entries(f.movables)) {
+    const [x, z, r] = saved[k] || o.userData.home;
+    o.position.set(x, 0, z); o.rotation.y = r;
+  }
+}
+const layoutOf = f => Object.fromEntries(Object.entries(f.movables).filter(([, o]) => {
+  const [x, z, r] = o.userData.home;
+  return o.position.x !== x || o.position.z !== z || Math.abs(turn(o.rotation.y) - turn(r)) > 1e-6;
+}).map(([k, o]) => [k, [o.position.x, o.position.z, turn(o.rotation.y)]]));   // only what moved from home
+let editing = null, held = null, picked = null, onLayout = () => {};
+export const onLayoutChange = cb => onLayout = cb;
+const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 0.95, 40).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial({ color: 0xffd45e, transparent: true, opacity: 0.9, depthWrite: false }));
+ring.visible = false;
+scene.add(ring);
+export function setEditing(on) {
+  editing = on && current ? floors.get(current) : null;
+  held = picked = null; ring.visible = false;
+  renderer.domElement.style.cursor = '';
+  return !!editing;
+}
+function saveLayout() {
+  editing.info = { ...editing.info, layout: layoutOf(editing) };
+  onLayout(editing.id, editing.info.layout);
+}
+export function resetLayout() {
+  if (!editing) return;
+  editing.info = { ...editing.info, layout: {} };
+  applyLayout(editing);
+  picked = null; ring.visible = false;
+  onLayout(editing.id, {});
+}
+function pickAt(e) {   // → the movable under the pointer, or null
+  ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  const list = Object.values(editing.movables).filter(o => o.visible);
+  let o = ray.intersectObjects(list, true)[0]?.object;
+  while (o && !list.includes(o)) o = o.parent;
+  return o || null;
+}
+function groundAt(e) {
+  ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
+  return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -editing.g.position.y), new THREE.Vector3());
+}
+function rotatePicked(by) {
+  if (!picked) return;
+  picked.rotation.y = turn(picked.rotation.y + by);
+  saveLayout();
+}
+const showRing = () => { if (picked) ring.position.set(picked.position.x, editing.g.position.y + 0.06, picked.position.z); ring.visible = !!picked; };
+// capture: these run before OrbitControls, so grabbing a piece doesn't also orbit the camera
+renderer.domElement.addEventListener('pointerdown', e => {
+  if (!editing || e.button !== 0) return;
+  const o = pickAt(e), p = o && groundAt(e);
+  if (!o || !p) return;
+  picked = o;
+  held = { dx: p.x - o.position.x, dz: p.z - o.position.z };
+  controls.enabled = false;
+  o.position.y = 0.12;
+  renderer.domElement.style.cursor = 'grabbing';
+  showRing();
+}, { capture: true });
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!editing) return;
+  if (!held) { renderer.domElement.style.cursor = pickAt(e) ? 'grab' : ''; return; }
+  const p = groundAt(e);
+  if (!p) return;
+  picked.position.x = THREE.MathUtils.clamp(snap(p.x - held.dx), -ROOM_X, ROOM_X);
+  picked.position.z = THREE.MathUtils.clamp(snap(p.z - held.dz), -ROOM_Z, ROOM_Z);
+  showRing();
+}, { capture: true });
+addEventListener('pointerup', () => {
+  if (!editing || !held) return;
+  picked.position.y = 0;
+  held = null;
+  controls.enabled = true;
+  renderer.domElement.style.cursor = 'grab';
+  saveLayout();
+});
+renderer.domElement.addEventListener('wheel', e => {   // wheel over a piece turns it instead of zooming
+  if (!editing) return;
+  const o = pickAt(e);
+  if (!o) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  picked = o;
+  rotatePicked(Math.sign(e.deltaY) * Math.PI / 4);
+  showRing();
+}, { capture: true, passive: false });
+addEventListener('keydown', e => {
+  if (editing && (e.key === 'r' || e.key === 'R') && !e.target.closest?.('input, textarea')) rotatePicked(Math.PI / 4);
 });
 
 // ---------- loop ----------

@@ -86,6 +86,10 @@
   #plaque div { min-width: 0; }
   #plaque-name { font: 20px var(--display); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #plaque-path { font-size: 12px; opacity: .8; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plaque-btn { display: flex; align-items: center; gap: 6px; background: rgba(255,243,220,.16); color: #fff3dc; border-radius: 14px; padding: 8px 12px; font: 14px var(--display); white-space: nowrap; }
+  .plaque-btn:hover { background: rgba(255,243,220,.28); }
+  #arrange[aria-pressed="true"] { background: var(--butter); color: #6b4a00; }
+  #plaque[data-arranging] #plaque-path { opacity: 1; color: var(--butter); }
   #leave { display: flex; align-items: center; gap: 6px; background: #fff3dc; color: #6b4229; border-radius: 14px; padding: 8px 12px; font: 14px var(--display); white-space: nowrap; }
 
   /* ---------- right column ---------- */
@@ -433,6 +437,8 @@
 
 <div id="plaque" hidden>
   <div><span id="plaque-name"></span><span id="plaque-path"></span></div>
+  <button id="arrange-reset" class="plaque-btn" data-icon="refresh" hidden>처음대로</button>
+  <button id="arrange" class="plaque-btn" data-icon="tool" aria-pressed="false">배치 바꾸기</button>
   <button id="leave" data-icon="out">건물 밖으로</button>
 </div>
 

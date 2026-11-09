@@ -64,7 +64,7 @@ $('#open-bag').onclick = () => shop.openBag();
 $('#open-store').onclick = () => shop.openStore();
 $('#empty-add').onclick = addFloor;
 
-world.onFloorChange(() => { $('#talks').hidden = true; renderPanel(); renderOrder(); renderLog(); renderAsks(); });
+world.onFloorChange(() => { $('#talks').hidden = true; setArranging(false); renderPanel(); renderOrder(); renderLog(); renderAsks(); });
 
 // ---------- OS clock ----------
 const PART = h => h < 5 ? '한밤' : h < 7 ? '새벽' : h < 11 ? '아침' : h < 13 ? '점심' : h < 17.5 ? '오후' : h < 19.8 ? '저녁' : '밤';
@@ -93,7 +93,7 @@ function renderOrder() {
   }
   $('#plaque-name').textContent = `${floors.indexOf(f) + 2}F · ${f.name}`;
   for (const b of document.querySelectorAll('#approve-mode button')) b.setAttribute('aria-pressed', String((b.dataset.auto === '1') === f.auto));
-  $('#plaque-path').textContent = f.path;
+  if (!$('#plaque').hasAttribute('data-arranging')) $('#plaque-path').textContent = f.path;
   $('#to').textContent = `${st.lead} 팀장에게`;
   $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 지금 맡기면 끝나는 대로 이어서 해요${queued[id] ? ` (대기 ${queued[id]}개)` : ''}` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘  ·  /resume 지난 대화  ·  /new 새 대화';
 }
@@ -125,6 +125,24 @@ $('#task').addEventListener('keydown', e => {
 });
 $('#stop').onclick = () => world.currentFloor() && office.stop(world.currentFloor());
 $('#leave').onclick = () => world.enter(null);
+
+// 배치 바꾸기: drag decor on this floor; world saves each move through office.setLayout
+function setArranging(on) {
+  on = world.setEditing(on);
+  $('#arrange').setAttribute('aria-pressed', String(on));
+  $('#arrange').lastChild.textContent = on ? '완료' : '배치 바꾸기';
+  $('#arrange-reset').hidden = !on;
+  $('#plaque').toggleAttribute('data-arranging', on);
+  const f = floors.find(x => x.id === world.currentFloor());
+  $('#plaque-path').textContent = on ? '물건을 끌어서 옮기고, 휠이나 R 키로 돌려요' : f?.path || '';
+}
+$('#arrange').onclick = () => setArranging($('#arrange').getAttribute('aria-pressed') !== 'true');
+$('#arrange-reset').onclick = () => world.resetLayout();
+world.onLayoutChange((id, layout) => {
+  office.setLayout(id, layout);
+  const f = floors.find(x => x.id === id);
+  if (f) f.layout = layout;   // keep the cached list in step so a later setFloors doesn't undo the move
+});
 $('#approve-mode').onclick = async e => {
   const b = e.target.closest('button[data-auto]'), id = world.currentFloor();
   if (!b || !id) return;

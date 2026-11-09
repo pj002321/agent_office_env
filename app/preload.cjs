@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('office', {
   sessions: floor => ipcRenderer.invoke('sessions', floor),
   setSession: (floor, session) => ipcRenderer.invoke('set-session', floor, session),
   setAuto:(floor, on) => ipcRenderer.invoke('set-auto', floor, on),
+  setLayout: (floor, layout) => ipcRenderer.invoke('set-layout', floor, layout),
   authCheck: names => ipcRenderer.invoke('auth-check', names),
   authLogin: name => ipcRenderer.invoke('auth-login', name),
   skills: () => ipcRenderer.invoke('skills'),
