@@ -148,7 +148,7 @@ async function catalog() {
         long: ui.longDescription || '', prompts: ui.defaultPrompt || [], capabilities: ui.capabilities || [],
         category: ui.category || p.category || '', author: ui.developerName || man.author?.name || '', homepage: ui.websiteURL || man.homepage || '',
         version: man.version || '', market: m.name || mk.name, color: ui.brandColor || null, logo: fileUrl(dir, ui.logo || ui.composerIcon),
-        needsAuth: p.policy?.authentication === 'ON_INSTALL', installed: cx.installed.has(id), installedId: cx.installed.has(id) ? id : null,
+        license: man.license || '', needsAuth: p.policy?.authentication === 'ON_INSTALL', installed: cx.installed.has(id), installedId: cx.installed.has(id) ? id : null,
       });
     }
   }

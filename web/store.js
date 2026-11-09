@@ -1,5 +1,6 @@
 // 스킬 가방 (installed skills) and 스킬 상점 (plugin store for Claude & Codex).
 import { ICON } from './icons.js';
+import { paper } from './paper.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -58,7 +59,7 @@ $('#bag-list').onclick = e => {
 };
 
 // ---------- 스킬 상점 ----------
-const store = { cli: 'claude', q: '', cat: '', sort: 'pop', shown: 48, data: null, sel: null, busy: new Map(), armed: null, confirm: null };
+const store = { cli: 'claude', q: '', cat: '', sort: 'pop', shown: 48, data: null, sel: null, busy: new Map(), armed: null };
 export async function openStore(cli) {
   if (cli) store.cli = cli;
   $('#store').hidden = false;
@@ -118,15 +119,12 @@ function renderDetail() {
   const p = store.sel && store.data[store.cli].find(x => x.id === store.sel);
   $('#store').dataset.detail = p ? '1' : '';
   if (!p) return;
-  const c = store.confirm?.id === p.id ? store.confirm : null;
   $('#store-detail').innerHTML = `
     <button class="x" id="detail-close" aria-label="닫기">${ICON.go}</button>
     ${logo(p, true)}
     <h2>${esc(p.name)}</h2>
     <p class="by">${esc(p.author || p.market)} · ${esc(p.market)}${p.version ? ` · v${esc(p.version)}` : ''}</p>
     ${action(p)}
-    ${c ? `<div class="confirm"><b>설치 명령을 확인해 주세요</b><p>이 플러그인은 아래 명령을 실행해서 설치돼요. 믿을 수 있을 때만 승인하세요.</p><pre>${esc(c.command)}</pre>
-      <footer><button class="yes" data-accept="${esc(p.id)}">승인하고 담기</button><button class="no" data-cancel="1">그만두기</button></footer></div>` : ''}
     <p class="long">${esc(p.long || p.description)}</p>
     ${p.prompts?.length ? `<h4>이렇게 써 보세요</h4><ul>${p.prompts.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
     <dl>${p.installs ? `<dt>설치</dt><dd>${p.installs.toLocaleString('ko-KR')}회</dd>` : ''}${p.category ? `<dt>분류</dt><dd>${esc(p.category)}</dd>` : ''}
@@ -134,12 +132,23 @@ function renderDetail() {
     ${/^https:\/\//.test(p.homepage) ? `<button class="link" data-url="${esc(p.homepage)}">${ICON.web}홈페이지 열기</button>` : ''}`;
 }
 
+// every install is someone else's code: show who made it, its license and what it needs, then stamp
+const installPaper = p => paper({ kind: '설치 허가서', title: `${p.name}을(를) 가방에 담을까요?`,
+  intro: `${CLI[p.cli]}에 플러그인을 설치해요. 다음 지시부터 직원들이 쓸 수 있어요.`,
+  items: [['만든 곳', p.author || p.market], ['라이선스', p.license || '표시 없음 · 홈페이지에서 확인해 주세요'],
+    ...(p.needsAuth ? [['계정 연결', '설치하면서 이 서비스의 계정 연결을 요청할 수 있어요.']] : []),
+    ['빼기', '언제든 상점에서 "빼기"로 지울 수 있어요.']],
+  yes: '허가하고 담기' });
+const commandPaper = (p, c) => paper({ kind: '명령 실행 허가서', title: `${p.name} 설치 명령을 실행할까요?`,
+  intro: '이 플러그인은 아래 명령을 이 PC에서 실행해서 설치돼요. 믿을 수 있을 때만 허가하세요.', code: c.command,
+  agree: '명령 내용을 확인했어요', yes: '허가하고 실행' });
 async function doInstall(id, sha) {
   const p = store.data[store.cli].find(x => x.id === id);
-  store.busy.set(id, '담는 중…'); store.confirm = null; renderStore();
+  if (!sha && !await installPaper(p)) return;
+  store.busy.set(id, '담는 중…'); renderStore();
   const r = await office.storeInstall(p.cli, id, sha);
   store.busy.delete(id);
-  if (r.confirm) { store.confirm = { id, ...r.confirm }; store.sel = id; }
+  if (r.confirm) { renderStore(); if (await commandPaper(p, r.confirm)) return doInstall(id, r.confirm.sha); }
   else if (r.ok) { p.installed = true; p.installedId = id; notify({ icon: 'check', tone: 'done', title: `${p.name} 획득!`, body: `${CLI[p.cli]} 스킬 가방에 담았어요. 다음 지시부터 쓸 수 있어요.` }); refreshSkills(); }
   else notify({ icon: 'key', tone: 'quest', title: `${p.name}을(를) 담지 못했어요`, body: r.message || '알 수 없는 문제가 생겼어요.' });
   renderStore();
@@ -167,8 +176,6 @@ $('#store').onclick = e => {
   if (t.closest('#detail-close')) { store.sel = null; return renderStore(); }
   const url = t.closest('[data-url]'); if (url) return office.openUrl(url.dataset.url);
   const ins = t.closest('[data-install]'); if (ins) return doInstall(ins.dataset.install);
-  const acc = t.closest('[data-accept]'); if (acc) return doInstall(acc.dataset.accept, store.confirm.sha);
-  if (t.closest('[data-cancel]')) { store.confirm = null; return renderStore(); }
   const rem = t.closest('[data-remove]');
   if (rem) { if (store.armed === rem.dataset.remove) return doRemove(rem.dataset.remove); store.armed = rem.dataset.remove; return renderStore(); }
   const card = t.closest('.card'); if (card) { store.sel = card.dataset.id; store.armed = null; renderStore(); }

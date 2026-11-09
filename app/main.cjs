@@ -10,6 +10,8 @@ const readline = require('readline');
 const { parse, describe } = require('./stream.cjs');
 const skills = require('./skills.cjs');
 const history = require('./history.cjs');
+const shop = require('./shop.cjs');
+const music = require('./music.cjs');
 
 // Tools that change things → 대표 must approve. Read-only tools run freely.
 const ASK_TOOLS = 'Bash|Edit|MultiEdit|Write|NotebookEdit|WebFetch|WebSearch';
@@ -18,6 +20,10 @@ const pending = new Map();   // ask id → { res, floor }: http response held op
 const owner = new Map();     // tool_use_id → agent id (who asked)
 const runs = new Map();      // floor id → child process
 let win, port;
+
+// one office per user: a second window would show floors as idle while the first one runs them.
+// A second launch focuses this window instead (and adds its folder as a floor, if it was given one).
+if (!app.requestSingleInstanceLock()) { app.exit(0); return; }
 
 // ---------- floors (persisted) ----------
 const STORE = path.join(app.getPath('userData'), 'floors.json');
@@ -34,10 +40,49 @@ function addFloor(dir) {
   save();
   return f;
 }
-const cliDir = process.argv.slice(app.isPackaged ? 1 : 2).find(a => !a.startsWith('-'));   // `npm start -- <folder>`
-if (cliDir && fs.existsSync(cliDir)) addFloor(cliDir);
+// `npm start -- <folder>`; a second launch's argv carries Chromium switches and the app path in its own order
+const argDir = (argv, cwd = process.cwd()) => argv.slice(1).filter(a => !a.startsWith('-')).map(a => path.resolve(cwd, a))
+  .find(a => a !== app.getAppPath() && fs.existsSync(a) && fs.statSync(a).isDirectory());
+const cliDir = argDir(process.argv);
+if (cliDir) addFloor(cliDir);
+app.on('second-instance', (_, argv, cwd) => {
+  const dir = argDir(argv, cwd);
+  if (dir) { addFloor(dir); send({ kind: 'floors' }); }
+  if (win?.isMinimized()) win.restore();
+  win?.focus();
+});
 
 const send = e => win?.webContents.send('office', e);
+
+// ---------- wallet (꾸미기 상점) ----------
+const WALLET = path.join(app.getPath('userData'), 'wallet.json');
+let wallet;
+try { wallet = shop.load(JSON.parse(fs.readFileSync(WALLET, 'utf8'))); } catch { wallet = shop.fresh(); }
+const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const walletView = () => ({ ...wallet, items: shop.ITEMS, packs: shop.PACKS, earn: shop.EARN, freeCharge: shop.FREE_CHARGE,
+  rewards: shop.REWARDS, attendedToday: wallet.attend.last === localDate() });
+const saveWallet = () => fs.writeFileSync(WALLET, JSON.stringify(wallet, null, 2));
+
+// ---------- headroom: route floors through the user's own `headroom proxy` when it's up ----------
+const PREFS = path.join(app.getPath('userData'), 'prefs.json');
+let prefs = { headroom: false };
+try { prefs = { ...prefs, ...JSON.parse(fs.readFileSync(PREFS, 'utf8')) }; } catch {}
+const HEADROOM = `http://127.0.0.1:${process.env.HEADROOM_PORT || 8787}`;
+const headroomUp = () => new Promise(ok => http.get(HEADROOM + '/health', { timeout: 1000 }, r => { r.resume(); ok(r.statusCode === 200); })
+  .on('error', () => ok(false)).on('timeout', function () { this.destroy(); }));
+// off, or proxy down → run claude as-is so a dead proxy never stalls a floor
+async function headroomEnv() {
+  if (!prefs.headroom || process.env.ANTHROPIC_BASE_URL) return { env: {}, down: false };   // already routed by the user's shell
+  if (!await headroomUp()) return { env: {}, down: true };
+  // like `headroom wrap claude`: a custom base URL otherwise makes claude load every tool schema up front
+  return { env: { ANTHROPIC_BASE_URL: HEADROOM, ENABLE_TOOL_SEARCH: process.env.ENABLE_TOOL_SEARCH ?? 'true' }, down: false };
+}
+ipcMain.handle('headroom', async () => ({ on: prefs.headroom, up: await headroomUp(), url: HEADROOM }));
+ipcMain.handle('set-headroom', async (_, on) => {
+  prefs.headroom = !!on;
+  fs.writeFileSync(PREFS, JSON.stringify(prefs, null, 2));
+  return { on: prefs.headroom, up: await headroomUp(), url: HEADROOM };
+});
 
 // ---------- approvals: hook.cjs → here (localhost only, token-checked) ----------
 const server = http.createServer((req, res) => {
@@ -60,10 +105,28 @@ const server = http.createServer((req, res) => {
 }).listen(0, '127.0.0.1', () => port = server.address().port);
 
 // ---------- runner: one claude process per floor ----------
-// ponytail: one task at a time per floor; queue orders if users want to stack them
+// one claude process per floor; orders given while it works wait in line and run in order (same session)
+const queues = new Map();    // floor id → [task]
 function run(floorId, task) {
   const f = floors.find(x => x.id === floorId);
-  if (!f || runs.has(floorId)) return;
+  if (!f) return;
+  if (runs.has(floorId)) {
+    const q = queues.get(floorId) || [];
+    queues.set(floorId, [...q, task]);
+    return send({ floor: f.id, kind: 'queue', count: q.length + 1 });
+  }
+  // hold the floor while the headroom check runs, so orders arriving meanwhile queue instead of spawning twice
+  const hold = { kill() { this.killed = true; } };
+  runs.set(floorId, hold);
+  send({ floor: f.id, kind: 'busy', busy: true });
+  headroomEnv().then(({ env, down }) => {
+    if (runs.get(floorId) !== hold) return;
+    if (hold.killed || !floors.includes(f)) { runs.delete(floorId); return send({ floor: f.id, kind: 'exit', code: null, text: '' }); }
+    if (down) send({ floor: f.id, kind: 'headroom-down' });
+    spawnClaude(f, floorId, task, env);
+  });
+}
+function spawnClaude(f, floorId, task, extraEnv) {
   const fwd = p => p.replace(/\\/g, '/');
   const settings = { hooks: { PreToolUse: [{ matcher: ASK_TOOLS, hooks: [{
     type: 'command', command: `"${fwd(process.execPath)}" "${fwd(path.join(__dirname, 'hook.cjs'))}"`, timeout: 3600,
@@ -72,10 +135,11 @@ function run(floorId, task) {
   if (f.session) args.push('--resume', f.session);
   // ponytail: ELECTRON_RUN_AS_NODE leaks into the agent's Bash env; give hook.cjs its own launcher if a project runs Electron
   const proc = spawn('claude', args, { cwd: f.path,
-    env: { ...process.env, OFFICE_PORT: port, OFFICE_TOKEN: token, OFFICE_FLOOR: f.id, ELECTRON_RUN_AS_NODE: '1' } });
+    env: { ...process.env, ...extraEnv, OFFICE_PORT: port, OFFICE_TOKEN: token, OFFICE_FLOOR: f.id, ELECTRON_RUN_AS_NODE: '1' } });
   runs.set(floorId, proc);
-  send({ floor: f.id, kind: 'busy', busy: true });
   proc.stdin.end(task);
+  shop.earn(wallet); saveWallet();
+  send({ kind: 'wallet', earned: shop.EARN, wallet: walletView() });
 
   const subs = new Set();
   readline.createInterface({ input: proc.stdout }).on('line', line => {
@@ -95,6 +159,9 @@ function run(floorId, task) {
     runs.delete(floorId);
     send({ floor: f.id, kind: 'exit', code, text });
     if (authFail || AUTH_ERR.test(err)) send({ floor: f.id, kind: 'auth', cli: 'claude' });
+    const [next, ...rest] = queues.get(floorId) || [];
+    queues.set(floorId, rest);
+    if (next !== undefined && floors.includes(f)) { send({ floor: f.id, kind: 'queue', count: rest.length }); run(floorId, next); }
   };
   proc.on('error', e => end(-1, e.message));
   proc.on('close', code => end(code, err.slice(-300)));
@@ -126,7 +193,7 @@ ipcMain.handle('set-session', (_, id, session) => {
   return true;
 });
 ipcMain.on('run', (_, floorId, task) => run(floorId, task));
-ipcMain.on('stop', (_, floorId) => runs.get(floorId)?.kill());
+ipcMain.on('stop', (_, floorId) => { queues.delete(floorId); send({ floor: floorId, kind: 'queue', count: 0 }); runs.get(floorId)?.kill(); });   // 멈추기 also drops waiting orders
 function answer(id, ok) {
   const p = pending.get(id);
   if (!p) return;
@@ -176,6 +243,17 @@ ipcMain.handle('skills', () => skills.installed(floors.map(f => f.path)));
 ipcMain.handle('store', () => skills.catalog());
 ipcMain.handle('store-install', (_, cli, id, sha) => skills.install(cli, id, sha));
 ipcMain.handle('store-remove', (_, cli, id) => skills.remove(cli, id));
+const MUSIC = path.join(app.getPath('userData'), 'music');
+ipcMain.handle('music', () => music.list(MUSIC));
+ipcMain.handle('music-add', async () => {
+  const r = await dialog.showOpenDialog(win, { properties: ['openFile', 'multiSelections'], filters: [{ name: '음악', extensions: music.EXT }] });
+  return r.canceled ? music.list(MUSIC) : music.add(MUSIC, r.filePaths);
+});
+ipcMain.handle('music-remove', (_, id) => music.remove(MUSIC, id));
+ipcMain.handle('wallet', () => walletView());
+for (const [ch, fn] of [['shop-buy', shop.buy], ['shop-equip', shop.equip], ['shop-charge', shop.charge]])
+  ipcMain.handle(ch, (_, id, on) => { const r = fn(wallet, String(id), on !== false); if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; });
+ipcMain.handle('attend', () => { const r = shop.attend(wallet, localDate()); if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; });
 ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
 
 app.whenReady().then(() => {

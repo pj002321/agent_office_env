@@ -56,6 +56,18 @@ At startup the app runs `claude auth status` and `codex login status` (after `wh
 - Install / remove: `claude plugin install|uninstall <id> --json -s user`, `codex plugin add|remove <id>`. IDs are validated before reaching the shell. A marketplace-declared install command is shown to 대표 and passed back with `--accept-command <sha256>` only after approval.
 - Using a skill: a picked Claude skill is sent in front of the order as `/name` (verified: `claude -p` runs it as a slash command).
 
+## Points & 꾸미기 상점 (app/shop.cjs, web/deco.js)
+
+- Every order earns `EARN` points (main, in `run()`); the wallet lives in `%APPDATA%/agent-office/wallet.json` and is pushed as a `{ kind: 'wallet' }` event.
+- Items are priced in points only: building tier (house → small → tower, in order), wallpaper, floor, toggleable furniture. Buying equips. `world.setLook()` restyles every floor.
+- Cash buys point packs (`PACKS`) — the single place a payment provider plugs in. Not connected yet.
+
+## Sound (web/sound.js, web/soundui.js, app/music.cjs)
+
+- BGM and button SFX are off by default; settings live in renderer localStorage.
+- The built-in healing track is generated live with Web Audio (no bundled audio, no license to track).
+- 내 음악: picked files are copied into `%APPDATA%/agent-office/music` and played from `file://`.
+
 ## Roadmap
 
 1. ✅ One floor, Claude runner, approvals, subagents

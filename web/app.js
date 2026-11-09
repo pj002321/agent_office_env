@@ -2,6 +2,11 @@
 import * as world from './world.js';
 import { ICON } from './icons.js';
 import * as shop from './store.js';
+import { paper } from './paper.js';
+import * as deco from './deco.js';
+import * as attend from './attend.js';
+import * as sound from './sound.js';
+import './soundui.js';
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -10,6 +15,7 @@ for (const [id, icon] of [['bag-close', 'x'], ['store-close', 'x'], ['store-refr
 
 let floors = [];
 const logs = [];
+const queued = {};          // floor id → orders waiting for the current run
 const asks = new Map();      // ask id → { floor, who, rank, text }
 
 async function loadFloors(list) {
@@ -89,7 +95,7 @@ function renderOrder() {
   for (const b of document.querySelectorAll('#approve-mode button')) b.setAttribute('aria-pressed', String((b.dataset.auto === '1') === f.auto));
   $('#plaque-path').textContent = f.path;
   $('#to').textContent = `${st.lead} 팀장에게`;
-  $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 끝나면 이어서 맡길 수 있어요` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘  ·  /resume 지난 대화  ·  /new 새 대화';
+  $('#task').placeholder = st.busy ? `${st.lead} 팀장이 일하는 중이에요. 지금 맡기면 끝나는 대로 이어서 해요${queued[id] ? ` (대기 ${queued[id]}개)` : ''}` : '무엇을 맡길까요? 예: README에 설치 방법을 정리해줘  ·  /resume 지난 대화  ·  /new 새 대화';
 }
 // skills picked from the bag ride in front of the order as `/skill` (Claude runs them as slash commands)
 let picked = [];
@@ -102,7 +108,8 @@ $('#use-skill').onclick = () => shop.openBag(inv => { if (!picked.includes(inv))
 $('#order').onsubmit = e => {
   e.preventDefault();
   const id = world.currentFloor(), t = $('#task').value.trim();
-  if (!id || (!t && !picked.length) || world.floorState(id).busy) return;
+  if (!id || (!t && !picked.length)) return;
+  const busy = world.floorState(id).busy;
   // claude's own /resume and /clear only exist in its interactive mode, so the app handles them
   if (!picked.length && /^\/(resume|continue)$/i.test(t)) { $('#task').value = ''; return openTalks(); }
   if (!picked.length && /^\/(new|clear)$/i.test(t)) { $('#task').value = ''; return switchTalk(null); }
@@ -110,7 +117,7 @@ $('#order').onsubmit = e => {
   const order = picked.length ? `${picked[0]} ${picked.length > 1 ? `(${picked.slice(1).join(', ')} 스킬도 활용해줘) ` : ''}${t}`.trim() : t;
   $('#task').value = '';
   picked = []; renderPicked();
-  log({ floor: id, who: '나', rank: '대표', text: `지시: ${order}`, tone: 'order' });
+  log({ floor: id, who: '나', rank: '대표', text: `${busy ? '다음 지시(지금 일 끝나면 시작)' : '지시'}: ${order}`, tone: 'order' });
   office.run(id, order);
 };
 $('#task').addEventListener('keydown', e => {
@@ -122,12 +129,20 @@ $('#approve-mode').onclick = async e => {
   const b = e.target.closest('button[data-auto]'), id = world.currentFloor();
   if (!b || !id) return;
   const auto = b.dataset.auto === '1';
+  const f0 = floors.find(x => x.id === id);
+  if (auto === f0.auto) return;
+  if (auto && !await paper({ kind: '위임장', title: `${f0.name} 층에 자동 승인을 맡길까요?`,
+    intro: '도장을 찍으면 이 층 직원들이 대표에게 묻지 않고 일을 진행해요.',
+    items: [['파일 수정', `${f0.path} 안의 파일을 만들고 고치고 지울 수 있어요.`],
+            ['명령 실행', '터미널 명령(설치, 빌드, git 등)을 바로 실행해요.'],
+            ['인터넷 접근', '웹 검색과 페이지 가져오기를 바로 해요.'],
+            ['되돌리기', '언제든 아래 "직접 승인"을 누르면 다시 매번 물어봐요.']],
+    agree: '믿을 수 있는 프로젝트라는 걸 확인했어요', yes: '위임하기' })) return;
   floors = await office.setAuto(id, auto);
   renderOrder();
   const f = floors.find(x => x.id === id);
   log({ floor: id, who: '나', rank: '대표', text: auto ? '이 층은 이제 자동 승인이에요' : '이 층은 이제 직접 승인해요', tone: 'order' });
-  if (auto) toast({ id: 'auto-' + id, icon: 'bolt', tone: 'info', title: `${f.name}: 자동 승인 켜짐`,
-    body: '파일 수정과 명령 실행을 묻지 않고 허락해요. 믿을 수 있는 프로젝트에서만 켜 두세요.', ttl: 5000 });
+  if (auto) toast({ id: 'auto-' + id, icon: 'bolt', tone: 'info', title: `${f.name}: 자동 승인 켜짐`, body: '직접 승인을 누르면 다시 매번 물어봐요.', ttl: 4000 });
 };
 
 // ---------- approvals ----------
@@ -202,16 +217,36 @@ $('#talks').onclick = e => { const b = e.target.closest('[data-session]'); if (b
 
 // ---------- events ----------
 office.on(e => {
+  if (e.kind === 'wallet') { deco.setWallet(e.wallet); if (e.earned) { deco.bump(e.earned); sound.sfx('coin'); } return; }
+  if (e.kind === 'ask' || e.kind === 'done') sound.sfx(e.kind);
   const line = world.handle(e);
   if (line) log({ floor: e.floor, who: line.who.name, rank: line.who.rank, text: line.text, tone: line.tone, icon: line.icon });
   if (e.kind === 'ask' && line) asks.set(e.id, { floor: e.floor, who: line.who.name, rank: line.who.rank, text: e.text, icon: e.icon });
   if (e.kind === 'answer') asks.delete(e.id);
   if (['ask', 'answer'].includes(e.kind)) renderAsks();
-  if (['busy', 'exit', 'ask', 'answer'].includes(e.kind)) { renderPanel(); renderOrder(); }
+  if (e.kind === 'floors') return loadFloors();   // a second launch added a folder
+  if (e.kind === 'queue') queued[e.floor] = e.count;
+  if (['busy', 'exit', 'ask', 'answer', 'queue'].includes(e.kind)) { renderPanel(); renderOrder(); }
   if (e.kind === 'auth') loginQuest(e.cli, 'login');
+  if (e.kind === 'headroom-down') toast({ id: 'headroom', icon: 'bolt', tone: 'quest', ttl: 6000, title: 'Headroom이 꺼져 있어요',
+    body: '이번 일은 프록시 없이 그냥 실행해요. 터미널에서 headroom proxy를 켜면 다음 일부터 거쳐 가요.' });
 });
 
 await world.ready();
+// first run: what this app does with the user's machine and accounts, before anything starts
+const TERMS = 'office-terms-v1';
+if (!localStorage.getItem(TERMS)) {
+  const ok = await paper({ kind: '입주 계약서', title: 'Agent Office에 오신 걸 환영해요',
+    intro: '사무실을 열기 전에 이 앱이 하는 일을 알려 드려요.',
+    items: [['내 CLI로 일해요', '이 PC에 설치된 claude · codex CLI를 대표님 계정 그대로 실행해요. 사용량은 대표님 요금제에서 차감돼요.'],
+            ['비밀번호는 몰라요', '로그인은 각 CLI의 공식 화면에서만 해요. 이 앱은 토큰이나 비밀번호를 읽거나 저장하지 않아요.'],
+            ['고치기 전에 물어봐요', '파일 수정 · 명령 실행 · 인터넷 접근은 대표님이 승인해야 진행돼요(층마다 자동 승인으로 바꿀 수 있어요).'],
+            ['대화 기록을 읽어요', '일지를 다시 보여 주려고 ~/.claude/projects 안의 대화 기록을 읽어요. 밖으로 보내지 않아요.'],
+            ['각 서비스 약관', 'Claude와 Codex 사용에는 Anthropic · OpenAI의 이용 약관이 그대로 적용돼요. 상점의 플러그인은 각 제작자의 라이선스를 따라요.']],
+    agree: '위 내용을 읽고 이해했어요', yes: '입주하기', no: '나가기' });
+  if (!ok) window.close();
+  else localStorage.setItem(TERMS, new Date().toISOString());
+}
 await loadFloors();
 renderLog();
 tickClock();
@@ -240,6 +275,8 @@ function toast({ id, icon, tone = 'quest', title, body, actions = [], ttl = 0 })
   if (ttl) el.ttl = setTimeout(() => closeToast(id), ttl);
 }
 shop.setNotify(t => toast({ id: 'store-' + Date.now(), ttl: 5000, ...t }));
+deco.setNotify(t => toast({ id: 'deco-' + Date.now(), ttl: 5000, ...t }));
+attend.setNotify(t => toast({ id: 'attend-' + Date.now(), ttl: 5000, ...t }));
 function closeToast(id) {
   const el = document.getElementById('toast-' + id);
   if (!el) return;

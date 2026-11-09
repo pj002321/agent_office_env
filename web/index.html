@@ -58,7 +58,7 @@
   #clock { display: flex; align-items: center; gap: 10px; margin: 0 2px 12px; padding: 8px 12px; border-radius: 16px; background: var(--teal-deep); }
   #clock-icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--butter); color: #8a5a00; flex: none; }
   #clock[data-icon="moon"] #clock-icon { background: #3b4a8a; color: #fff3c4; }
-  #clock-time { font: 22px var(--display); display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  #clock-time { font: 20px var(--display); white-space: nowrap; display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
   #clock-date { font-size: 12px; opacity: .85; display: block; }
   #floor-list { list-style: none; margin: 0; padding: 4px; flex: 1; overflow: hidden auto; display: flex; flex-direction: column; gap: 6px; background: var(--teal-deep); border-radius: 18px; }
   #floor-list li { position: relative; }
@@ -146,13 +146,53 @@
   #stop { background: #f3ede4; }
   #order[data-mode="outside"] { display: none; }
   #hint { position: fixed; left: calc(260px + (100vw - 606px) / 2); bottom: 22px; translate: -50% 0; background: rgba(255,255,255,.92); border-radius: 18px; padding: 9px 18px; box-shadow: var(--shadow); font: 15px var(--display); color: var(--ink-soft); white-space: nowrap; }
-  #order[data-mode="ready"] #stop, #order[data-mode="busy"] #go { display: none; }
+  #order[data-mode="ready"] #stop { display: none; }
 
   /* ---------- empty ---------- */
   #empty { position: fixed; left: 50%; top: 44%; translate: -50% -50%; width: 360px; text-align: center; background: var(--card); border-radius: 26px; padding: 26px 26px 22px; box-shadow: var(--shadow); }
   #empty h2 { font: 24px var(--display); margin: 0 0 6px; }
   #empty p { margin: 0 0 16px; color: var(--ink-soft); }
   #empty button { background: var(--leaf); color: #fff; border-radius: 16px; padding: 12px 20px; font: 17px var(--display); display: inline-flex; gap: 6px; align-items: center; }
+  /* ---------- permission paper (center) ---------- */
+  #paper { position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; background: rgba(40, 30, 20, .4); animation: fade .25s; }
+  #paper .sheets { position: relative; width: min(500px, calc(100vw - 48px)); }
+  #paper .sheet { border-radius: 18px; background: #fffdf7; box-shadow: 0 18px 50px rgba(40,30,20,.3);
+    animation: flyin .55s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i) * 80ms); }
+  #paper .back { position: absolute; inset: 0; background: #f6eedf; }
+  #paper .back[style*="--i:0"] { rotate: -5deg; translate: -10px 6px; }
+  #paper .back[style*="--i:1"] { rotate: 3deg; translate: 8px 2px; }
+  @keyframes flyin { from { transform: translate(38vw, 70vh) rotate(28deg); opacity: 0; } }
+  #paper .top { position: relative; padding: 22px 26px 20px; max-height: calc(100vh - 80px); overflow: hidden auto;
+    background: #fffdf7 repeating-linear-gradient(transparent 0 27px, #f1e8d8 27px 28px); background-position: 0 14px; }
+  #paper header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px dashed var(--line); padding-bottom: 10px; }
+  #paper .kind { font: 13px var(--display); color: #fff; background: var(--coral); border-radius: 8px; padding: 2px 10px; }
+  #paper .docno { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  #paper h2 { margin: 14px 0 6px; font: 22px var(--display); font-weight: normal; }
+  #paper .intro { margin: 0 0 10px; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+  #paper ol { margin: 0; padding: 0 0 0 20px; font-size: 14px; line-height: 1.55; }
+  #paper li { margin: 8px 0; padding-left: 2px; }
+  #paper li b { display: block; font: 15px var(--display); font-weight: normal; }
+  #paper li span { color: var(--ink-soft); overflow-wrap: anywhere; }
+  #paper pre { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: #3d3128; color: #fff3df; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  #paper .agree { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; font: 15px var(--display); }
+  #paper .agree .box { width: 22px; height: 22px; border-radius: 7px; border: 2px solid #c9b9a3; background: #fff; display: grid; place-items: center; color: transparent; }
+  #paper .agree .box svg { width: 15px; height: 15px; stroke-width: 3; }
+  #paper .agree[aria-checked="true"] .box { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+  #paper footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  #paper footer button { display: inline-flex; align-items: center; gap: 6px; border-radius: 16px; padding: 11px 18px; font: 16px var(--display); }
+  #paper footer svg { width: 17px; height: 17px; }
+  #paper footer .no { background: #f3ede4; color: var(--ink); }
+  #paper .yes { background: var(--leaf); color: #fff; }
+  #paper .yes:disabled { background: #c9cfc5; cursor: not-allowed; }
+  #paper .stamp { position: absolute; right: 34px; bottom: 70px; width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
+    border: 4px solid var(--leaf); color: var(--leaf); font: 28px var(--display); rotate: -14deg; opacity: 0; pointer-events: none; }
+  #paper.stamped .stamp { animation: stamp .32s cubic-bezier(.2,1.4,.4,1) forwards; }
+  @keyframes stamp { from { transform: scale(2.2); opacity: 0; } to { transform: scale(1); opacity: .9; } }
+  #paper.leave .sheet, #paper.away .sheet { animation: away .32s cubic-bezier(.5,0,.75,0) forwards; animation-delay: calc((2 - var(--i)) * 50ms); }
+  #paper.leave, #paper.away { animation: fade .32s reverse forwards; }
+  @keyframes away { to { transform: translate(-30vw, -60vh) rotate(-20deg); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { #paper .sheet, #paper.leave .sheet, #paper.away .sheet { animation: none; } #paper.stamped .stamp { animation: none; opacity: .9; } }
+
   /* ---------- toasts ---------- */
   #toasts { position: fixed; top: 96px; left: calc(260px + (100vw - 606px) / 2); translate: -50% 0; width: min(440px, calc(100vw - 650px)); display: flex; flex-direction: column; gap: 10px; z-index: 5; }
   .toast { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 14px 16px; box-shadow: var(--shadow); animation: drop .45s cubic-bezier(.2,1.4,.4,1); transition: opacity .25s, translate .25s; }
@@ -282,10 +322,87 @@
   #store-detail dt { color: var(--ink-soft); }
   #store-detail dd { margin: 0; overflow-wrap: anywhere; }
   #store-detail .link { display: inline-flex; align-items: center; gap: 6px; color: var(--teal-deep); font: 14px var(--display); }
-  .confirm { margin: 12px 0; padding: 12px; border-radius: 16px; background: var(--coral-soft); font-size: 13px; }
-  .confirm pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #fff; border-radius: 10px; padding: 8px; font-size: 12px; }
-  .confirm footer { display: flex; gap: 6px; }
-  .confirm footer button { border-radius: 12px; padding: 7px 14px; font: 14px var(--display); }
+
+  /* ---------- decor shop ---------- */
+  #open-deco { grid-column: 1 / -1; flex-direction: row; justify-content: center; position: relative; }
+  #points, .coin-pill { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; padding: 2px 9px 2px 3px; border-radius: 999px; background: #fff3c4; color: #7a4f00; font: 13px var(--display); }
+  #points::before, .coin-pill::before { content: "P"; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; background: var(--butter); box-shadow: inset 0 -2px 0 #e0a800; font-size: 11px; color: #7a4f00; }
+  #points { position: relative; }
+  #points::after { content: attr(data-plus); position: absolute; right: -4px; top: -6px; font: 13px var(--display); color: #fff3c4; opacity: 0; pointer-events: none; }
+  #points.bump { animation: coin .45s cubic-bezier(.2,1.4,.4,1); }
+  #points.bump::after { animation: plus 1s ease-out; }
+  @keyframes coin { 50% { transform: scale(1.25); } }
+  @keyframes plus { 15% { opacity: 1; } to { opacity: 0; transform: translateY(-22px); } }
+  @media (prefers-reduced-motion: reduce) { #points.bump, #points.bump::after { animation: none; } }
+  .coin-pill { padding: 5px 14px 5px 5px; font-size: 20px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.08); }
+  .coin-pill::before { width: 28px; height: 28px; font-size: 15px; }
+  #deco { position: fixed; inset: 0; z-index: 7; background: rgba(40, 30, 20, .42); display: grid; place-items: center; animation: fade .2s; }
+  #deco .shop { width: min(900px, calc(100vw - 48px)); height: min(660px, calc(100vh - 48px)); }
+  #deco-grid { flex: 1; min-height: 0; overflow: auto; padding: 8px 24px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; align-content: start; }
+  #deco-grid[data-tab="building"] { grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; }
+  #deco-grid .card { cursor: default; }
+  #deco-grid .arrow { color: var(--ink-soft); }
+  #deco-grid .arrow svg { width: 22px; height: 22px; }
+  .swatch { width: 52px; height: 52px; border-radius: 16px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+  .swatch.coin { display: grid; place-items: center; border-radius: 50%; background: var(--butter); box-shadow: inset 0 -4px 0 #e0a800; color: #7a4f00; font: 24px var(--display); }
+  .now { font: 12px var(--display); background: var(--butter); color: #5a3b00; border-radius: 8px; padding: 2px 8px; }
+  .act.wear { background: var(--teal); color: #fff; }
+  .act.worn { background: var(--leaf-soft); color: var(--leaf); }
+  /* ---------- sound ---------- */
+  #sound-btn { margin-left: auto; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.14); color: #fff; flex: none; transition: background .15s; }
+  #sound-btn:hover { background: rgba(255,255,255,.26); }
+  #sound-btn svg { width: 16px; height: 16px; }
+  #sound-btn[data-on="1"] { background: var(--butter); color: #6b4a00; }
+  #sound-btn[data-playing="1"] { animation: ring 1.6s infinite ease-out; }
+  @keyframes ring { from { box-shadow: 0 0 0 0 rgba(255,212,94,.6); } to { box-shadow: 0 0 0 9px rgba(255,212,94,0); } }
+  @media (prefers-reduced-motion: reduce) { #sound-btn[data-playing="1"] { animation: none; box-shadow: 0 0 0 3px rgba(255,212,94,.45); } }
+  #sound { position: fixed; left: 256px; top: 64px; width: 290px; z-index: 6; background: var(--card); border-radius: 22px; padding: 14px 16px; box-shadow: 0 18px 50px rgba(40,30,20,.28); animation: pop .25s cubic-bezier(.2,1.4,.4,1); }
+  #sound h2 { margin: 0 0 6px; font: 18px var(--display); font-weight: normal; }
+  .snd-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .snd-row .lbl { font: 14px var(--display); white-space: nowrap; }
+  .snd-row input { flex: 1; min-width: 0; }
+  .switch { position: relative; width: 40px; height: 24px; border-radius: 999px; background: #e3d8c8; flex: none; transition: background .2s; }
+  .switch::after { content: ''; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(74,58,46,.3); transition: translate .2s cubic-bezier(.3,1.3,.5,1); }
+  .switch[aria-checked="true"] { background: var(--leaf); }
+  .switch[aria-checked="true"]::after { translate: 16px 0; }
+  #sound input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 6px; background: linear-gradient(var(--teal), var(--teal)) 0 / var(--v, 50%) 100% no-repeat, #eadfce; outline-offset: 4px; }
+  #sound input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--butter); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(74,58,46,.35); cursor: pointer; }
+  #tracks { list-style: none; margin: 4px 0 8px; padding: 4px; background: #fbf6ee; border-radius: 14px; max-height: 200px; overflow: auto; }
+  #tracks li { position: relative; }
+  #tracks .trk { width: 100%; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 10px; text-align: left; font-size: 13px; }
+  #tracks .trk:hover { background: var(--card); }
+  #tracks .trk.on { background: var(--leaf-soft); color: #1f6b3a; }
+  #tracks .trk svg { width: 14px; height: 14px; }
+  #tracks .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #tracks li:has(.del) .trk { padding-right: 34px; }
+  #tracks .playing { flex: none; font: 11px var(--display); background: var(--leaf); color: #fff; border-radius: 8px; padding: 0 6px; }
+  #tracks .del { right: 4px; padding: 3px; }
+  #tracks .del svg { width: 13px; height: 13px; }
+  #tracks li:hover .del { opacity: 1; }
+  #tracks .del.armed { padding: 3px 7px; }
+  #music-add { width: 100%; justify-content: center; background: var(--brass); color: var(--ink); }
+  #sound .hint { margin: 4px 2px 6px; font-size: 12px; color: var(--ink-soft); }
+  #sound-err { margin: 6px 0 0; padding: 6px 10px; border-radius: 10px; background: var(--coral-soft); color: var(--coral); font-size: 12px; overflow-wrap: anywhere; }
+  /* ---------- 출석체크 ---------- */
+  #open-attend { grid-column: 1 / -1; flex-direction: row; justify-content: center; position: relative; }
+  #attend-dot { position: absolute; top: 8px; right: 12px; width: 9px; height: 9px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 2px var(--teal-deep); }
+  #attend { position: fixed; inset: 0; z-index: 7; background: rgba(40, 30, 20, .42); display: grid; place-items: center; animation: fade .2s; }
+  .attend-card { width: min(760px, calc(100vw - 48px)); background: #fffaf2; border-radius: 30px; padding: 22px 24px 26px; box-shadow: 0 30px 80px rgba(40,30,20,.4); animation: rise .35s cubic-bezier(.16,1,.3,1); }
+  .attend-card header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
+  .attend-card header div { flex: 1; }
+  .attend-card h2 { margin: 0; font: 28px var(--display); font-weight: normal; }
+  .attend-card p { margin: 2px 0 0; color: var(--ink-soft); font-size: 14px; }
+  #attend-grid { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .slot { flex: 0 0 92px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 4px; border-radius: 20px; background: var(--card); box-shadow: 0 3px 10px rgba(74,58,46,.10); opacity: .5; transition: opacity .3s, transform .3s cubic-bezier(.4,0,1,1), margin-right .3s; }
+  .slot b { font: 16px var(--display); font-weight: normal; }
+  .slot em { font: 13px var(--display); font-style: normal; color: var(--ink-soft); }
+  .slot .coin-pill { margin: 0; font-size: 15px; padding: 3px 10px 3px 3px; }
+  .slot .coin-pill::before { width: 20px; height: 20px; font-size: 11px; }
+  .slot.gift { background: linear-gradient(var(--butter), var(--brass)); }
+  .slot.today { opacity: 1; box-shadow: 0 0 0 3px var(--leaf), 0 6px 16px rgba(40,122,65,.25); }
+  .slot.next { opacity: .9; box-shadow: 0 0 0 2px var(--butter); }
+  .slot.gone { opacity: 0; transform: scale(.5); margin-right: -102px; }
+  @media (prefers-reduced-motion: reduce) { .slot { transition: none; } }
   [hidden] { display: none !important; }
 </style>
 <script type="importmap">
@@ -300,11 +417,13 @@
 
 <nav id="elevator" aria-label="층 이동">
   <h1 data-icon="out">Agent Office</h1>
-  <div id="clock"><span id="clock-icon"></span><div><span id="clock-time"></span><span id="clock-date"></span></div></div>
+  <div id="clock"><span id="clock-icon"></span><div><span id="clock-time"></span><span id="clock-date"></span></div><button id="sound-btn" aria-label="소리 · 연결 설정" aria-controls="sound" aria-expanded="false"></button></div>
   <ol id="floor-list"></ol>
   <div class="shelf">
     <button id="open-bag" data-icon="bag">스킬 가방</button>
     <button id="open-store" data-icon="shop">스킬 상점</button>
+    <button id="open-attend" data-icon="check">출석체크<span id="attend-dot" hidden></span></button>
+    <button id="open-deco" data-icon="spark">꾸미기 상점<span id="points">0P</span></button>
   </div>
   <button id="add-floor" data-icon="plus">새 층 올리기</button>
 </nav>
@@ -361,6 +480,40 @@
     <div class="shop-body"><div id="store-grid"></div><aside id="store-detail"></aside></div>
   </section>
 </div>
+
+<div id="deco" hidden>
+  <section class="shop" role="dialog" aria-label="꾸미기 상점">
+    <header class="shop-head">
+      <div class="sign"><span class="awning"></span><h2>꾸미기 상점</h2><p id="deco-earn"></p></div>
+      <span id="deco-points" class="coin-pill">0P</span>
+      <button id="deco-close" class="icon-btn" aria-label="상점 닫기"></button>
+    </header>
+    <div class="shop-bar">
+      <div class="tabs" role="tablist"><button data-tab="building" role="tab">건물</button><button data-tab="wall" role="tab">벽지</button><button data-tab="floor" role="tab">바닥</button><button data-tab="furniture" role="tab">가구</button><button data-tab="packs" role="tab">포인트 충전</button></div>
+    </div>
+    <div id="deco-grid"></div>
+  </section>
+</div>
+
+<div id="attend" hidden>
+  <section class="attend-card" role="dialog" aria-label="출석체크">
+    <header><div><h2>출석체크</h2><p id="attend-sub"></p></div><button id="attend-close" class="icon-btn" aria-label="닫기"></button></header>
+    <ol id="attend-grid"></ol>
+  </section>
+</div>
+
+<section id="sound" hidden role="dialog" aria-label="소리 · 연결 설정">
+  <h2>소리</h2>
+  <div class="snd-row"><span class="lbl">배경 음악</span><input type="range" id="bgm-vol" min="0" max="100" aria-label="배경 음악 크기"><button class="switch" id="bgm-on" role="switch" aria-checked="false" aria-label="배경 음악"></button></div>
+  <ul id="tracks"></ul>
+  <button id="music-add" class="act" data-icon="plus">내 음악 추가</button>
+  <p class="hint">mp3, ogg, wav, m4a, flac 파일을 넣으면 여기서 틀 수 있어요</p>
+  <div class="snd-row"><span class="lbl">버튼 효과음</span><input type="range" id="sfx-vol" min="0" max="100" aria-label="버튼 효과음 크기"><button class="switch" id="sfx-on" role="switch" aria-checked="false" aria-label="버튼 효과음"></button></div>
+  <p id="sound-err" hidden></p>
+  <h2 style="margin-top:12px">연결</h2>
+  <div class="snd-row"><span class="lbl">Headroom 거쳐 실행</span><button class="switch" id="hr-on" role="switch" aria-checked="false" aria-label="Headroom 거쳐 실행" style="margin-left:auto"></button></div>
+  <p class="hint" id="hr-state" role="status"></p>
+</section>
 
 <div id="toasts" aria-live="polite"></div>
 
