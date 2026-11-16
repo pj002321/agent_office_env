@@ -50,14 +50,15 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
 .nav .btn-small { background: var(--butter); color: #5a3e00; box-shadow: var(--press); }
 
 /* ---------- hero ---------- */
-.hero { position: relative; margin: 12px; min-height: clamp(720px, calc(100vh - 24px), 960px); border-radius: 32px; overflow: hidden; display: flex; justify-content: center;
-  background: url(img/hero-world.webp) center calc(100% + 48px) / cover no-repeat, linear-gradient(var(--sky-top), var(--sky-mid) 60%, var(--sky-peach)); }
+/* art is width-fit and its hilltop sits ~48% down, so height must grow with width to keep the hill under the copy */
+.hero { position: relative; margin: 12px; min-height: max(780px, calc(440px + 31.5vw)); border-radius: 32px; overflow: hidden; display: flex; justify-content: center;
+  background: url(img/hero-world.webp) center calc(100% + 48px) / max(100%, 1100px) auto no-repeat, var(--sky-top); }   /* art's top row is --sky-top: no seam */
 .hero-copy { position: relative; text-align: center; padding: clamp(104px, 13vh, 132px) 24px 0; max-width: 820px; }
 .hero h1 { font-size: clamp(42px, 5.6vw, 78px); line-height: 1.08; letter-spacing: -.01em; color: #24425a; text-shadow: 0 2px 14px rgba(255, 255, 255, .7); }
 .lede { margin: 20px auto 0; font-size: clamp(17px, 1.6vw, 20px); color: #2f4a5c; max-width: 34em; }
 .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
 .fine { margin: 14px 0 0; font-size: 14px; color: #3c566a; }
-.hero .fine { display: inline-block; padding: 2px 12px; border-radius: 999px; background: rgba(255, 255, 255, .78); }
+.hero .fine { display: inline-block; padding: 2px 12px; border-radius: 999px; background: rgba(255, 255, 255, .9); }
 
 /* ---------- showcase window ---------- */
 .showcase { position: relative; z-index: 2; width: min(var(--wrap), calc(100% - 40px)); margin: max(-17vh, -160px) auto 0; }
@@ -140,6 +141,8 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
 .os-row { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-top: 36px; }
 .os { position: relative; display: flex; align-items: center; gap: 16px; min-width: min(360px, 100%); padding: 20px 24px; border-radius: 22px; background: var(--card); text-decoration: none; text-align: left; box-shadow: var(--shadow); transition: transform .25s var(--ease), box-shadow .25s var(--ease); }
 .os:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.os.is-soon { opacity: .65; }
+.os.is-soon:hover { transform: none; box-shadow: var(--shadow); }
 .os > svg { width: 44px; height: 44px; padding: 10px; border-radius: 14px; background: var(--leaf-soft); color: var(--leaf); }
 .os b { display: block; font: 22px var(--display); font-weight: 400; }
 .os small { font-size: 14px; color: var(--ink-soft); }

@@ -3,7 +3,7 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const REL = 'https://github.com/pj002321/agent_office_env/releases/latest/download/';
 const OS = {
   win: { name: 'Windows', file: 'AgentOffice-Setup.exe' },
-  mac: { name: 'macOS', file: 'AgentOffice-mac.dmg' },
+  mac: { name: 'macOS', file: null },   // no mac build published yet
 };
 
 // ---------- which computer is this? ----------
@@ -18,17 +18,18 @@ function detectOS() {
 const mine = detectOS();
 const other = mine === 'mac' ? 'win' : 'mac';
 for (const a of $$('[data-dl="primary"]')) {
-  if (!mine) continue;
+  if (!mine || !OS[mine].file) continue;
   a.href = REL + OS[mine].file;
   const label = a.querySelector('[data-dl-label]');
   if (label) label.textContent = `${OS[mine].name}용 무료 다운로드`;
 }
 for (const a of $$('[data-dl="other"]')) {
-  if (mine) { a.href = REL + OS[other].file; a.textContent = `${OS[other].name}용`; }
+  if (mine && OS[other].file) { a.href = REL + OS[other].file; a.textContent = `${OS[other].name}용`; }
+  else if (mine) a.textContent = `${OS[other].name}는 준비 중`;
   else a.textContent = 'Windows · macOS 고르기';
 }
 const note = document.querySelector('[data-dl-note]');
-if (note && !mine) note.textContent = '컴퓨터(Windows · macOS)에서 쓰는 데스크톱 앱이에요 · 무료 · 오픈소스';
+if (note && !mine) note.textContent = '컴퓨터(Windows)에서 쓰는 데스크톱 앱이에요 · 무료 · 오픈소스';
 for (const card of $$('.os')) card.classList.toggle('is-mine', card.dataset.os === mine);
 
 // ---------- scene tabs ----------
