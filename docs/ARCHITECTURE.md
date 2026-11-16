@@ -1,4 +1,4 @@
-# Agent Office — Architecture
+# Cozy Office — Architecture
 
 Goal: a downloadable desktop app. Each project folder is an office floor; the user (대표) gives orders,
 their own locally installed `claude` / `codex` CLIs do the real work, and the office shows it like a game.

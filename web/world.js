@@ -262,7 +262,7 @@ const drawSign = (g, w, h) => {
   g.clearRect(0, 0, w, h);
   g.fillStyle = '#5a4636'; g.beginPath(); g.roundRect(0, 0, w, h, 40); g.fill();
   g.fillStyle = '#fff3dc'; g.font = '64px Jua'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText('AGENT OFFICE', w / 2, h / 2 + 4);
+  g.fillText('COZY OFFICE', w / 2, h / 2 + 4);
 };
 const signTex = canvasTex(512, 128, drawSign);
 add(lobby, new THREE.PlaneGeometry(2.6, 0.65), new THREE.MeshBasicMaterial({ map: signTex, transparent: true }), 0, 2.95, FD / 2 + 0.2, { shadow: false });
@@ -836,6 +836,7 @@ scene.add(stars);
 const moon = add(scene, sphere(4, 28, 20), new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0 }), -17, 25, -26, { shadow: false });
 let hourOverride = null, lastSky = -1;
 export const debugHour = h => { hourOverride = h; lastSky = -1; };   // testing hook: force a time of day
+export const debugCam = () => ({ camera, controls });   // testing hook: site/promo clips steer the camera
 export const debugVisit = kind => { const f = floors.get(current); if (f) ({ critter, delivery, ghost, guest: g => { g.lifeT = 0; } })[kind]?.(f); };   // testing hook: force a drop-in
 const mixHex = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
 function tickSky() {

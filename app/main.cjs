@@ -1,6 +1,8 @@
 // Electron main: one building, one floor per project folder. Each floor can run the user's own `claude` CLI;
 // its stream-json output becomes OfficeEvents tagged with the floor, and tool approvals are routed to 대표.
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+// renamed Agent Office → Cozy Office: keep the old data folder so existing floors, points and music carry over
+app.setPath('userData', require('path').join(app.getPath('appData'), 'Agent Office'));
 const { spawn, execFile } = require('child_process');
 const http = require('http');
 const crypto = require('crypto');
@@ -283,8 +285,9 @@ ipcMain.handle('attend', () => { const r = shop.attend(wallet, localDate()); if 
 ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
 
 app.whenReady().then(() => {
-  win = new BrowserWindow({ width: 1440, height: 900, minWidth: 1100, minHeight: 700, title: 'Agent Office',
-                            backgroundColor: '#bfe6f5', webPreferences: { preload: path.join(__dirname, 'preload.cjs') } });
+  win = new BrowserWindow({ width: 1440, height: 900, minWidth: 1100, minHeight: 700, title: 'Cozy Office',
+                            backgroundColor: '#bfe6f5', icon: path.join(__dirname, '..', 'build', 'icon.png'),   // dev runs; packaged builds embed it
+                            webPreferences: { preload: path.join(__dirname, 'preload.cjs') } });
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, '..', 'web', 'index.html'));
 });

@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Agent Office · AI 직원들이 출근하는 작은 사무실</title>
+<title>Cozy Office · AI 직원들이 출근하는 작은 사무실</title>
 <meta name="description" content="내 컴퓨터의 Claude Code를 귀여운 3D 사무실로. 지시는 한 줄로, 결재는 대표님이. Windows 무료 다운로드, macOS는 준비 중.">
 <meta name="theme-color" content="#93d3f2">
 <link rel="canonical" href="https://cozyagentoffice.com/">
+<meta property="og:locale:alternate" content="en_US">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Agent Office">
+<meta property="og:site_name" content="Cozy Office">
 <meta property="og:url" content="https://cozyagentoffice.com/">
-<meta property="og:title" content="Agent Office · AI 직원들이 출근하는 작은 사무실">
+<meta property="og:title" content="Cozy Office · AI 직원들이 출근하는 작은 사무실">
 <meta property="og:description" content="터미널에서 혼자 돌던 Claude Code가 사무실 팀장이 돼요. 지시는 한 줄로, 결재는 대표님이.">
 <meta property="og:image" content="https://cozyagentoffice.com/img/og.jpg">
 <meta property="og:image:width" content="1200">
@@ -18,6 +19,8 @@
 <meta property="og:locale" content="ko_KR">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="preload" href="img/hero-world.webp" as="image" media="(min-width: 721px)">
 <link rel="preload" href="img/hero-world-1280.webp" as="image" media="(max-width: 720px)">
 <link rel="stylesheet" href="fonts/jua/400.css" media="print" onload="this.media='all'">
@@ -28,59 +31,60 @@
 <body>
 
 <header class="nav">
-  <a class="brand" href="#top" aria-label="Agent Office 처음으로">
+  <a class="brand" href="#top" aria-label="Cozy Office 처음으로" data-en-aria-label="Cozy Office home">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg>
-    Agent Office
+    Cozy Office
   </a>
-  <nav aria-label="페이지 안내">
-    <a href="#floors">둘러보기</a>
-    <a href="#start">시작하기</a>
+  <nav aria-label="페이지 안내" data-en-aria-label="Page">
+    <a href="#floors" data-en="Tour">둘러보기</a>
+    <a href="#start" data-en="Get started">시작하기</a>
     <a href="https://github.com/pj002321/agent_office_env" rel="noopener">GitHub</a>
   </nav>
-  <a class="btn btn-small" data-dl="primary" href="#download">다운로드</a>
+  <button class="lang" type="button" data-lang-toggle aria-label="Switch to English">EN</button>
+  <a class="btn btn-small" data-dl="primary" href="#download" data-en="Download">다운로드</a>
 </header>
 
 <main id="top">
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <h1 id="hero-title">AI 직원들이 출근하는 <br>작은 사무실</h1>
-      <p class="lede">터미널에서 혼자 돌던 Claude Code가 사무실 팀장이 돼요. <br>지시는 한 줄로, 결재는 대표님이.</p>
+      <h1 id="hero-title" data-en="A tiny office where &lt;br&gt;AI staff clock in">AI 직원들이 출근하는 <br>작은 사무실</h1>
+      <p class="lede" data-en="Claude Code stops running alone in a terminal and becomes your team lead. &lt;br&gt;One line to give an order, and you sign off on every change.">터미널에서 혼자 돌던 Claude Code가 사무실 팀장이 돼요. <br>지시는 한 줄로, 결재는 대표님이.</p>
       <div class="cta">
         <a class="btn btn-primary" data-dl="primary" href="#download">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>
-          <span data-dl-label>무료로 내려받기</span>
+          <span data-dl-label data-en="Download free">무료로 내려받기</span>
         </a>
-        <a class="btn btn-quiet" data-dl="other" href="#download">다른 OS용</a>
+        <a class="btn btn-quiet" data-dl="other" href="#download" data-en="Other OS">다른 OS용</a>
       </div>
-      <p class="fine" data-dl-note>Windows 데스크톱 앱 · 무료 · 오픈소스</p>
+      <p class="fine" data-dl-note data-en="Windows desktop app · Free · Open source">Windows 데스크톱 앱 · 무료 · 오픈소스</p>
     </div>
   </section>
 
-  <section class="showcase" aria-label="앱 미리보기">
+  <section class="showcase" aria-label="앱 미리보기" data-en-aria-label="App preview">
     <figure class="window">
       <div class="titlebar" aria-hidden="true">
         <span class="dots"><i></i><i></i><i></i></span>
-        <span class="wtitle">Agent Office</span>
+        <span class="wtitle">Cozy Office</span>
       </div>
       <div class="screen">
-        <img class="shot is-on" data-scene="order" src="img/scene-order-1280.webp" srcset="img/scene-order-800.webp 800w, img/scene-order-1280.webp 1280w, img/scene-order.webp 2136w" sizes="(max-width: 720px) 124vw, min(1160px, 100vw)" width="2136" height="1292" alt="3층 api-server 사무실. 지시 칸에 '로그인 API에 요청 횟수 제한 붙여 줘'가 적혀 있고 팀장이 말풍선으로 답하고 있다.">
-        <img class="shot" data-scene="crew" data-srcset="img/scene-crew-800.webp 800w, img/scene-crew-1280.webp 1280w, img/scene-crew.webp 2136w" sizes="(max-width: 720px) 124vw, min(1160px, 100vw)" width="2136" height="1292" loading="lazy" alt="2층 shop-web 사무실. 직원 세 명이 책상에 앉아 있고 머리 위에 'checkout.test.ts 고치는 중' 같은 작업 표시가 떠 있다.">
-        <img class="shot" data-scene="approve" data-srcset="img/scene-approve-800.webp 800w, img/scene-approve-1280.webp 1280w, img/scene-approve.webp 2136w" sizes="(max-width: 720px) 124vw, min(1160px, 100vw)" width="2136" height="1292" loading="lazy" alt="직원이 대표 책상 앞에서 빨간 말풍선으로 승인을 요청하고, 오른쪽에 승인 · 거절 카드가 떠 있다.">
-        <img class="shot" data-scene="deco" data-srcset="img/scene-deco-800.webp 800w, img/scene-deco-1280.webp 1280w, img/scene-deco.webp 2136w" sizes="(max-width: 720px) 124vw, min(1160px, 100vw)" width="2136" height="1292" loading="lazy" alt="별밤 벽지와 라벤더 카펫으로 꾸민 4층. 배치 바꾸기 중이라 오락기 아래에 노란 고리가 표시돼 있다.">
-        <img class="shot" data-scene="night" data-srcset="img/scene-night-800.webp 800w, img/scene-night-1280.webp 1280w, img/scene-night.webp 2136w" sizes="(max-width: 720px) 124vw, min(1160px, 100vw)" width="2136" height="1292" loading="lazy" alt="밤의 건물 외관. 세 층 모두 창문에 불이 켜져 있고 층마다 '작업 중' 표시가 붙어 있다.">
+        <video class="shot is-on" data-scene="order" poster="video/order.webp" muted playsinline preload="auto" aria-label="3층 사무실로 카메라가 들어가고, 팀장이 '네, 대표님! 로그인 라우터부터 살펴볼게요'라고 답한 뒤 routes/auth.ts를 읽기 시작한다." data-en-aria-label="The camera flies into the third-floor office; the lead replies to the order and starts reading routes/auth.ts."><source src="video/order-640.mp4" type="video/mp4" media="(max-width: 720px)"><source src="video/order.mp4" type="video/mp4"></video>
+        <video class="shot" data-scene="crew" poster="video/crew.webp" muted playsinline preload="none" aria-label="엘리베이터에서 직원 셋이 차례로 내려 팀장에게 인사하고 각자 책상에 앉아 checkout.test.ts, README.md, 이미지 압축 작업을 시작한다." data-en-aria-label="Three staff step off the elevator one by one, greet the lead, and sit down to work on checkout.test.ts, README.md and an image-compression script."><source src="video/crew-640.mp4" type="video/mp4" media="(max-width: 720px)"><source src="video/crew.mp4" type="video/mp4"></video>
+        <video class="shot" data-scene="approve" poster="video/approve.webp" muted playsinline preload="none" aria-label="직원이 대표 책상 앞까지 걸어와 빨간 말풍선으로 'checkout.test.ts 고쳐도 될까요?'라고 묻고, 승인되자 감사 인사를 하고 자리로 돌아간다." data-en-aria-label="A staffer walks up to your desk with a red bubble asking to edit checkout.test.ts, gets approved, says thanks and goes back to work."><source src="video/approve-640.mp4" type="video/mp4" media="(max-width: 720px)"><source src="video/approve.mp4" type="video/mp4"></video>
+        <video class="shot" data-scene="deco" poster="video/deco.webp" muted playsinline preload="none" aria-label="같은 사무실의 벽지가 줄무늬에서 별밤으로, 바닥이 체크 타일에서 라벤더 카펫으로 바뀌고 전구와 오락기, 수족관이 하나씩 놓인다." data-en-aria-label="The same office redecorates itself: striped then starry wallpaper, check tiles then lavender carpet, and string lights, an arcade cabinet and an aquarium appear one by one."><source src="video/deco-640.mp4" type="video/mp4" media="(max-width: 720px)"><source src="video/deco.mp4" type="video/mp4"></video>
+        <video class="shot" data-scene="night" poster="video/night.webp" muted playsinline preload="none" aria-label="오후의 건물이 아담한 하우스에서 벽돌 빌딩, 유리 빌딩으로 바뀌는 동안 하늘이 저녁을 지나 밤이 되고, 일하는 층의 창문에 불이 켜진다." data-en-aria-label="The building upgrades from a little house to a brick building to a glass tower while afternoon turns to night and the working floors light up."><source src="video/night-640.mp4" type="video/mp4" media="(max-width: 720px)"><source src="video/night.mp4" type="video/mp4"></video>
       </div>
     </figure>
-    <div class="scenes" role="tablist" aria-label="장면 고르기">
-      <button role="tab" aria-selected="true" data-scene="order"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg>지시</button>
-      <button role="tab" aria-selected="false" data-scene="crew"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 19a4 4 0 0 1 7 0"/></svg>직원</button>
-      <button role="tab" aria-selected="false" data-scene="approve"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 14.5a1.6 1.6 0 0 1 2.6-1.8L8 15"/></svg>결재</button>
-      <button role="tab" aria-selected="false" data-scene="deco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></svg>꾸미기</button>
-      <button role="tab" aria-selected="false" data-scene="night"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>밤</button>
+    <div class="scenes" role="tablist" aria-label="장면 고르기" data-en-aria-label="Choose a scene">
+      <button role="tab" aria-selected="true" data-scene="order"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l16-8-6 16-2.5-6.5z"/></svg><span data-en="Order">지시</span></button>
+      <button role="tab" aria-selected="false" data-scene="crew"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 19a4 4 0 0 1 7 0"/></svg><span data-en="Staff">직원</span></button>
+      <button role="tab" aria-selected="false" data-scene="approve"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 11V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 14.5a1.6 1.6 0 0 1 2.6-1.8L8 15"/></svg><span data-en="Approve">결재</span></button>
+      <button role="tab" aria-selected="false" data-scene="deco"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8zM19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/></svg><span data-en="Decorate">꾸미기</span></button>
+      <button role="tab" aria-selected="false" data-scene="night"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg><span data-en="Night">밤</span></button>
     </div>
-    <p class="scene-caption" aria-live="off" data-caption>층에 들어가 한 줄로 일을 맡기면, 팀장이 바로 답해요.</p>
+    <p class="scene-caption" aria-live="off" data-caption data-en="Step onto a floor, type one line, and the team lead answers right away.">층에 들어가 한 줄로 일을 맡기면, 팀장이 바로 답해요.</p>
   </section>
 
-  <section id="floors" class="floors" aria-label="층별 둘러보기">
+  <section id="floors" class="floors" aria-label="층별 둘러보기" data-en-aria-label="Floor-by-floor tour">
     <div class="shaft" aria-hidden="true">
       <div class="car">
         <span class="car-floor" data-car>2F</span>
@@ -91,122 +95,144 @@
     <article class="floor" data-floor="2F" style="--tint:#e2f5ec; --tint-ink:#1f6b4c; --lamp:#8fd3b6">
       <span class="stop">2F</span>
       <div class="copy">
-        <h2>한 줄이면 팀장이<br>일을 시작해요</h2>
-        <p>층에 들어가 아래 칸에 할 일을 적으면, 그 층의 프로젝트 폴더에서 Claude Code가 돌아요. 팀장이 무엇을 하는지 말풍선으로 알려 줘요.</p>
+        <h2 data-en="One line and&lt;br&gt;the lead gets to work">한 줄이면 팀장이<br>일을 시작해요</h2>
+        <p data-en="Type a task on a floor and Claude Code runs in that floor’s project folder. The lead tells you what it’s doing in speech bubbles.">층에 들어가 아래 칸에 할 일을 적으면, 그 층의 프로젝트 폴더에서 Claude Code가 돌아요. 팀장이 무엇을 하는지 말풍선으로 알려 줘요.</p>
         <ul class="points">
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7h11M9 12h11M9 17h11M4 7h1M4 12h1M4 17h1"/></svg><div><b>지시는 줄을 서요</b>일하는 중에 맡긴 일은 끝나는 대로 이어서 해요.</div></li>
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></svg><div><b>지난 대화도 그대로</b><code>/resume</code>으로 예전 대화를, <code>/new</code>로 새 대화를 시작해요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7h11M9 12h11M9 17h11M4 7h1M4 12h1M4 17h1"/></svg><div data-en="&lt;b&gt;Orders wait their turn&lt;/b&gt;Anything you add mid-task runs as soon as the current one ends."><b>지시는 줄을 서요</b>일하는 중에 맡긴 일은 끝나는 대로 이어서 해요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></svg><div data-en="&lt;b&gt;Pick up where you left off&lt;/b&gt;&lt;code&gt;/resume&lt;/code&gt; reopens a past conversation, &lt;code&gt;/new&lt;/code&gt; starts fresh."><b>지난 대화도 그대로</b><code>/resume</code>으로 예전 대화를, <code>/new</code>로 새 대화를 시작해요.</div></li>
         </ul>
       </div>
-      <figure class="plate"><div class="crop" style="--x:0.22; --y:0.21; --w:0.59; --h:0.79"><img src="img/plate-order-1280.webp" srcset="img/plate-order-800.webp 800w, img/plate-order-1280.webp 1280w, img/plate-order.webp 2136w" sizes="(max-width: 900px) 170vw, 900px" width="2136" height="1292" loading="lazy" alt="지시 칸에 '로그인 API에 요청 횟수 제한 붙여 줘'를 적자, 팀장이 '네, 대표님! 로그인 라우터부터 살펴볼게요'라고 말풍선으로 답한다."></div></figure>
+      <figure class="plate"><div class="crop" style="--x:0.22; --y:0.21; --w:0.59; --h:0.79"><img src="img/plate-order-1280.webp" srcset="img/plate-order-800.webp 800w, img/plate-order-1280.webp 1280w, img/plate-order.webp 2136w" sizes="(max-width: 900px) 170vw, 900px" width="2136" height="1292" loading="lazy" alt="지시 칸에 '로그인 API에 요청 횟수 제한 붙여 줘'를 적자, 팀장이 '네, 대표님! 로그인 라우터부터 살펴볼게요'라고 말풍선으로 답한다." data-en-alt="The order box reads “Add rate limiting to the login API”, and the lead answers “Yes, boss! I’ll start with the login router.”"></div></figure>
     </article>
 
     <article class="floor" data-floor="3F" style="--tint:#fff3cf; --tint-ink:#7a5600; --lamp:#ffcf6b">
       <span class="stop">3F</span>
       <div class="copy">
-        <h2>일이 커지면<br>직원이 출근해요</h2>
-        <p>팀장이 하위 에이전트를 부르면, 엘리베이터에서 직원이 내려 자기 책상에 앉아요. 누가 어떤 파일을 읽고 고치는지 머리 위에 떠요.</p>
+        <h2 data-en="Bigger jobs,&lt;br&gt;more staff">일이 커지면<br>직원이 출근해요</h2>
+        <p data-en="When the lead spins up sub-agents, staff step off the elevator and take a desk. Whoever is reading or editing a file shows it above their head.">팀장이 하위 에이전트를 부르면, 엘리베이터에서 직원이 내려 자기 책상에 앉아요. 누가 어떤 파일을 읽고 고치는지 머리 위에 떠요.</p>
         <ul class="points">
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l4 4L9 19H5v-4z"/></svg><div><b>지금 하는 일이 보여요</b>읽는 중, 고치는 중, 실행 중이 한눈에 들어와요.</div></li>
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg><div><b>보고하면 퇴근</b>맡은 일을 끝낸 직원은 팀장에게 보고하고 하나둘 퇴근해요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l4 4L9 19H5v-4z"/></svg><div data-en="&lt;b&gt;See the work happen&lt;/b&gt;Reading, editing, running — all at a glance."><b>지금 하는 일이 보여요</b>읽는 중, 고치는 중, 실행 중이 한눈에 들어와요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg><div data-en="&lt;b&gt;Report, then clock out&lt;/b&gt;Staff report back to the lead when they finish, then head home."><b>보고하면 퇴근</b>맡은 일을 끝낸 직원은 팀장에게 보고하고 하나둘 퇴근해요.</div></li>
         </ul>
       </div>
-      <figure class="plate"><div class="crop" style="--x:0.165; --y:0.14; --w:0.46; --h:0.42"><img src="img/plate-crew-1280.webp" srcset="img/plate-crew-800.webp 800w, img/plate-crew-1280.webp 1280w, img/plate-crew.webp 2136w" sizes="(max-width: 900px) 217vw, 1150px" width="2136" height="1292" loading="lazy" alt="직원 셋이 책상에 앉아 있고, 머리 위에 'checkout.test.ts 고치는 중', 'README.md 고치는 중', '이미지 압축 스크립트 실행'이 떠 있다."></div></figure>
+      <figure class="plate"><div class="crop" style="--x:0.165; --y:0.14; --w:0.46; --h:0.42"><img src="img/plate-crew-1280.webp" srcset="img/plate-crew-800.webp 800w, img/plate-crew-1280.webp 1280w, img/plate-crew.webp 2136w" sizes="(max-width: 900px) 217vw, 1150px" width="2136" height="1292" loading="lazy" alt="직원 셋이 책상에 앉아 있고, 머리 위에 'checkout.test.ts 고치는 중', 'README.md 고치는 중', '이미지 압축 스크립트 실행'이 떠 있다." data-en-alt="Three staff at their desks with checkout.test.ts, README.md and an image-compression script shown above their heads."></div></figure>
     </article>
 
     <article class="floor floor-wide" data-floor="4F" style="--tint:#ffe5dc; --tint-ink:#9a3a26; --lamp:#ffa98a">
       <span class="stop">4F</span>
       <div class="copy">
-        <h2>고치기 전에는<br>대표님 결재부터</h2>
-        <p>파일 수정, 명령 실행, 인터넷 접근은 직원이 대표 책상까지 걸어와 물어봐요. 대표님이 승인해야 진행돼요.</p>
+        <h2 data-en="Nothing changes&lt;br&gt;without your sign-off">고치기 전에는<br>대표님 결재부터</h2>
+        <p data-en="File edits, commands, and web access mean a walk to your desk to ask first. Nothing proceeds until you approve.">파일 수정, 명령 실행, 인터넷 접근은 직원이 대표 책상까지 걸어와 물어봐요. 대표님이 승인해야 진행돼요.</p>
         <ul class="points">
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></svg><div><b>층마다 직접 · 자동 승인</b>믿을 만한 프로젝트는 자동 승인으로 두고, 기록만 받아 봐요.</div></li>
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg><div><b>비밀번호는 몰라요</b>로그인은 CLI 공식 화면에서만 해요. 앱은 토큰을 읽거나 저장하지 않아요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></svg><div data-en="&lt;b&gt;Manual or auto, per floor&lt;/b&gt;Put trusted projects on auto-approve and just read the log."><b>층마다 직접 · 자동 승인</b>믿을 만한 프로젝트는 자동 승인으로 두고, 기록만 받아 봐요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></svg><div data-en="&lt;b&gt;Never sees your password&lt;/b&gt;You log in through the CLI’s own screen. The app never reads or stores tokens."><b>비밀번호는 몰라요</b>로그인은 CLI 공식 화면에서만 해요. 앱은 토큰을 읽거나 저장하지 않아요.</div></li>
         </ul>
       </div>
-      <figure class="plate"><div class="crop" style="--x:0.235; --y:0; --w:0.765; --h:0.44"><img src="img/plate-approve-1280.webp" srcset="img/plate-approve-800.webp 800w, img/plate-approve-1280.webp 1280w, img/plate-approve.webp 2136w" sizes="(max-width: 900px) 130vw, 1280px" width="2136" height="1292" loading="lazy" alt="직원 콩이가 빨간 말풍선으로 'checkout.test.ts 고치는 중'을 들고 대표 책상 앞에서 기다리고, 오른쪽 위에 승인 · 거절 카드가 떠 있다."></div></figure>
+      <figure class="plate"><div class="crop" style="--x:0.235; --y:0; --w:0.765; --h:0.44"><img src="img/plate-approve-1280.webp" srcset="img/plate-approve-800.webp 800w, img/plate-approve-1280.webp 1280w, img/plate-approve.webp 2136w" sizes="(max-width: 900px) 130vw, 1280px" width="2136" height="1292" loading="lazy" alt="직원 콩이가 빨간 말풍선으로 'checkout.test.ts 고치는 중'을 들고 대표 책상 앞에서 기다리고, 오른쪽 위에 승인 · 거절 카드가 떠 있다." data-en-alt="A staffer waits at your desk holding a red bubble for checkout.test.ts, with Approve and Reject buttons in the corner."></div></figure>
     </article>
 
     <article class="floor" data-floor="5F" style="--tint:#efe6fb; --tint-ink:#5b3f99; --lamp:#bba3e8">
       <span class="stop">5F</span>
       <div class="copy">
-        <h2>일할수록<br>사무실이 예뻐져요</h2>
-        <p>일을 맡길 때마다 포인트가 쌓여요. 벽지, 바닥, 수족관과 오락기로 층마다 따로 꾸미고, 끌어서 원하는 자리에 놓아요.</p>
+        <h2 data-en="The more you work,&lt;br&gt;the cozier it gets">일할수록<br>사무실이 예뻐져요</h2>
+        <p data-en="Every order earns points. Decorate each floor with wallpaper, flooring, an aquarium or an arcade cabinet, and drag things where you like.">일을 맡길 때마다 포인트가 쌓여요. 벽지, 바닥, 수족관과 오락기로 층마다 따로 꾸미고, 끌어서 원하는 자리에 놓아요.</p>
         <ul class="points">
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6a4 4 0 0 0 4.5 5.5L11 19a2 2 0 0 1-3-3l7.5-7.5A4 4 0 0 0 14 6z"/></svg><div><b>배치 바꾸기</b>책장, 화분, 가구를 끌어서 옮기고 휠로 돌려요.</div></li>
-          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg><div><b>건물도 이사해요</b>아담한 하우스에서 작은 빌딩, 대형 빌딩까지.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6a4 4 0 0 0 4.5 5.5L11 19a2 2 0 0 1-3-3l7.5-7.5A4 4 0 0 0 14 6z"/></svg><div data-en="&lt;b&gt;Rearrange&lt;/b&gt;Drag shelves, plants and furniture; spin them with the wheel."><b>배치 바꾸기</b>책장, 화분, 가구를 끌어서 옮기고 휠로 돌려요.</div></li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg><div data-en="&lt;b&gt;Move up in the world&lt;/b&gt;From a little house to a brick building to a glass tower."><b>건물도 이사해요</b>아담한 하우스에서 작은 빌딩, 대형 빌딩까지.</div></li>
         </ul>
       </div>
-      <figure class="plate"><div class="crop" style="--x:0.14; --y:0.1; --w:0.74; --h:0.7"><img src="img/plate-deco-1280.webp" srcset="img/plate-deco-800.webp 800w, img/plate-deco-1280.webp 1280w, img/plate-deco.webp 2136w" sizes="(max-width: 900px) 135vw, 720px" width="2136" height="1292" loading="lazy" alt="별밤 벽지와 라벤더 카펫으로 꾸민 사무실. 오락기 아래 노란 고리가 떠 있어 끌어서 옮기는 중이고, 직원들은 안락의자에서 쉬고 있다."></div></figure>
+      <figure class="plate"><div class="crop" style="--x:0.14; --y:0.1; --w:0.74; --h:0.7"><img src="img/plate-deco-1280.webp" srcset="img/plate-deco-800.webp 800w, img/plate-deco-1280.webp 1280w, img/plate-deco.webp 2136w" sizes="(max-width: 900px) 135vw, 720px" width="2136" height="1292" loading="lazy" alt="별밤 벽지와 라벤더 카펫으로 꾸민 사무실. 오락기 아래 노란 고리가 떠 있어 끌어서 옮기는 중이고, 직원들은 안락의자에서 쉬고 있다." data-en-alt="An office with starry wallpaper and lavender carpet; the arcade cabinet is being dragged to a new spot while staff relax in armchairs."></div></figure>
     </article>
 
     <article class="floor floor-wide" data-floor="6F" style="--tint:#e1f0fd; --tint-ink:#24578a; --lamp:#8fc0ef">
       <span class="stop">6F</span>
       <div class="copy">
-        <h2>프로젝트마다 한 층씩</h2>
-        <p>프로젝트 폴더를 고르면 층이 하나 올라가요. 밖에서 보면 어느 층이 일하는 중인지, 누가 결재를 기다리는지 창문과 풍선으로 알 수 있어요. 하늘은 컴퓨터 시계를 따라 낮에서 밤으로 바뀌어요.</p>
+        <h2 data-en="One floor per project">프로젝트마다 한 층씩</h2>
+        <p data-en="Pick a project folder and a new floor goes up. From outside, lit windows and badges show which floors are working and who’s waiting on you. The sky follows your computer’s clock from day to night.">프로젝트 폴더를 고르면 층이 하나 올라가요. 밖에서 보면 어느 층이 일하는 중인지, 누가 결재를 기다리는지 창문과 풍선으로 알 수 있어요. 하늘은 컴퓨터 시계를 따라 낮에서 밤으로 바뀌어요.</p>
       </div>
       <div class="pair">
-        <figure class="plate"><img src="img/scene-building-1280.webp" srcset="img/scene-building-800.webp 800w, img/scene-building-1280.webp 1280w, img/scene-building.webp 2136w" sizes="(max-width: 720px) 165vw, (max-width: 900px) 45vw, 480px" width="2136" height="1292" loading="lazy" alt="오후의 건물 외관. 2층과 4층에 '작업 중', 3층에 '쉬는 중' 표시가 붙어 있다."><figcaption>오후 2:30 · 두 층이 일하는 중</figcaption></figure>
-        <figure class="plate"><img src="img/scene-night-1280.webp" srcset="img/scene-night-800.webp 800w, img/scene-night-1280.webp 1280w, img/scene-night.webp 2136w" sizes="(max-width: 720px) 165vw, (max-width: 900px) 45vw, 480px" width="2136" height="1292" loading="lazy" alt="밤의 건물 외관. 모든 층 창문에 불이 켜져 있다."><figcaption>밤 9:12 · 야근하는 층은 불이 켜져요</figcaption></figure>
+        <figure class="plate"><img src="img/scene-building-1280.webp" srcset="img/scene-building-800.webp 800w, img/scene-building-1280.webp 1280w, img/scene-building.webp 2136w" sizes="(max-width: 720px) 165vw, (max-width: 900px) 45vw, 480px" width="2136" height="1292" loading="lazy" alt="오후의 건물 외관. 2층과 4층에 '작업 중', 3층에 '쉬는 중' 표시가 붙어 있다." data-en-alt="The building in the afternoon: floors 2 and 4 working, floor 3 on a break."><figcaption data-en="2:30 PM · two floors at work">오후 2:30 · 두 층이 일하는 중</figcaption></figure>
+        <figure class="plate"><img src="img/scene-night-1280.webp" srcset="img/scene-night-800.webp 800w, img/scene-night-1280.webp 1280w, img/scene-night.webp 2136w" sizes="(max-width: 720px) 165vw, (max-width: 900px) 45vw, 480px" width="2136" height="1292" loading="lazy" alt="밤의 건물 외관. 모든 층 창문에 불이 켜져 있다." data-en-alt="The building at night with every window lit."><figcaption data-en="9:12 PM · late-night floors keep the lights on">밤 9:12 · 야근하는 층은 불이 켜져요</figcaption></figure>
       </div>
     </article>
   </section>
 
   <section id="start" class="start" aria-labelledby="start-title">
-    <h2 id="start-title">세 단계면 입주 완료</h2>
+    <h2 id="start-title" data-en="Move in, in three steps">세 단계면 입주 완료</h2>
     <ol class="steps">
       <li>
         <span class="num">1</span>
-        <h3>Claude Code 준비</h3>
-        <p>이 앱은 내 컴퓨터에 깔린 Claude Code CLI로 일해요. 설치한 뒤 터미널에서 한 번 로그인해 두세요.</p>
+        <h3 data-en="Set up Claude Code">Claude Code 준비</h3>
+        <p data-en="The app works through the Claude Code CLI on your computer. Install it and log in once from a terminal.">이 앱은 내 컴퓨터에 깔린 Claude Code CLI로 일해요. 설치한 뒤 터미널에서 한 번 로그인해 두세요.</p>
         <code class="cmd">claude auth login</code>
-        <a class="link" href="https://github.com/anthropics/claude-code" rel="noopener">Claude Code 설치 안내 보기</a>
+        <a class="link" href="https://github.com/anthropics/claude-code" rel="noopener" data-en="How to install Claude Code">Claude Code 설치 안내 보기</a>
       </li>
       <li>
         <span class="num">2</span>
-        <h3>Agent Office 내려받기</h3>
-        <p>내 컴퓨터에 맞는 설치 파일을 받아 열어요. 사용 요금은 쓰고 계신 Claude 요금제에서 그대로 나가요.</p>
-        <a class="btn btn-primary btn-block" data-dl="primary" href="#download"><span data-dl-label>무료로 내려받기</span></a>
+        <h3 data-en="Download the app">Cozy Office 내려받기</h3>
+        <p data-en="Grab the installer for your computer and open it. Usage is billed to your existing Claude plan.">내 컴퓨터에 맞는 설치 파일을 받아 열어요. 사용 요금은 쓰고 계신 Claude 요금제에서 그대로 나가요.</p>
+        <a class="btn btn-primary btn-block" data-dl="primary" href="#download"><span data-dl-label data-en="Download free">무료로 내려받기</span></a>
       </li>
       <li>
         <span class="num">3</span>
-        <h3>새 층 올리기</h3>
-        <p>"새 층 올리기"로 프로젝트 폴더를 고르면 끝. 층에 들어가 팀장에게 첫 일을 맡겨 보세요.</p>
+        <h3 data-en="Add a floor">새 층 올리기</h3>
+        <p data-en="Choose a project folder with “새 층 올리기” (Add a floor), step inside, and give the lead a first task.">"새 층 올리기"로 프로젝트 폴더를 고르면 끝. 층에 들어가 팀장에게 첫 일을 맡겨 보세요.</p>
       </li>
     </ol>
     <details class="warn">
-      <summary>처음 열 때 경고 창이 뜨나요?</summary>
-      <p>아직 코드 서명을 하지 않은 앱이라 운영체제가 한 번 확인을 받아요.</p>
+      <summary data-en="Seeing a warning on first launch?">처음 열 때 경고 창이 뜨나요?</summary>
+      <p data-en="The app isn’t code-signed yet, so your OS asks once.">아직 코드 서명을 하지 않은 앱이라 운영체제가 한 번 확인을 받아요.</p>
       <ul>
-        <li><b>Windows</b> "Windows의 PC 보호" 창에서 <i>추가 정보</i>를 누르고 <i>실행</i>을 눌러요.</li>
-        <li><b>macOS</b> 처음 열 때 막히면 <i>시스템 설정 → 개인정보 보호 및 보안</i>에서 <i>그래도 열기</i>를 눌러요.</li>
+        <li data-en="&lt;b&gt;Windows&lt;/b&gt; On “Windows protected your PC”, click &lt;i&gt;More info&lt;/i&gt;, then &lt;i&gt;Run anyway&lt;/i&gt;."><b>Windows</b> "Windows의 PC 보호" 창에서 <i>추가 정보</i>를 누르고 <i>실행</i>을 눌러요.</li>
+        <li data-en="&lt;b&gt;macOS&lt;/b&gt; If it’s blocked, go to &lt;i&gt;System Settings → Privacy &amp;amp; Security&lt;/i&gt; and click &lt;i&gt;Open Anyway&lt;/i&gt;."><b>macOS</b> 처음 열 때 막히면 <i>시스템 설정 → 개인정보 보호 및 보안</i>에서 <i>그래도 열기</i>를 눌러요.</li>
       </ul>
     </details>
   </section>
 
   <section id="download" class="download" aria-labelledby="dl-title">
-    <h2 id="dl-title">오늘부터 출근시켜 볼까요?</h2>
-    <p>무료 · 오픈소스(MIT) · 내 컴퓨터에서만 돌아가요</p>
+    <h2 id="dl-title" data-en="Ready to open the office?">오늘부터 출근시켜 볼까요?</h2>
+    <p data-en="Free · Open source (MIT) · Runs only on your computer">무료 · 오픈소스(MIT) · 내 컴퓨터에서만 돌아가요</p>
     <div class="os-row">
       <a class="os" data-os="win" href="https://github.com/pj002321/agent_office_env/releases/latest/download/AgentOffice-Setup.exe">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5l7.5-1v7H3zM12 4.3L21 3v8.5h-9zM3 12.5h7.5v7L3 18.5zM12 12.5h9V21l-9-1.3z"/></svg>
-        <span><b>Windows</b><small>Windows 10 이상 · AgentOffice-Setup.exe</small></span>
-        <em class="mine">내 컴퓨터</em>
+        <span data-en="&lt;b&gt;Windows&lt;/b&gt;&lt;small&gt;Windows 10 or later · AgentOffice-Setup.exe&lt;/small&gt;"><b>Windows</b><small>Windows 10 이상 · AgentOffice-Setup.exe</small></span>
+        <em class="mine" data-en="Your computer">내 컴퓨터</em>
       </a>
       <div class="os is-soon" data-os="mac">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>
-        <span><b>macOS</b><small>준비 중이에요 · 릴리스 페이지에서 소식을 확인하세요</small></span>
-        <em class="mine">내 컴퓨터</em>
+        <span data-en="&lt;b&gt;macOS&lt;/b&gt;&lt;small&gt;Coming soon · watch the releases page&lt;/small&gt;"><b>macOS</b><small>준비 중이에요 · 릴리스 페이지에서 소식을 확인하세요</small></span>
+        <em class="mine" data-en="Your computer">내 컴퓨터</em>
       </div>
     </div>
-    <p class="fine">Claude Code CLI가 필요해요. 지난 버전은 <a href="https://github.com/pj002321/agent_office_env/releases" rel="noopener">GitHub 릴리스</a>에서 받을 수 있어요.</p>
+    <p class="fine" data-en="Requires the Claude Code CLI. Older versions are on &lt;a href=&quot;https://github.com/pj002321/agent_office_env/releases&quot; rel=&quot;noopener&quot;&gt;GitHub Releases&lt;/a&gt;.">Claude Code CLI가 필요해요. 지난 버전은 <a href="https://github.com/pj002321/agent_office_env/releases" rel="noopener">GitHub 릴리스</a>에서 받을 수 있어요.</p>
   </section>
 </main>
 
 <footer class="foot">
-  <p><b>Agent Office</b> · MIT License · <a href="https://github.com/pj002321/agent_office_env" rel="noopener">GitHub</a></p>
-  <p>Claude와 Claude Code는 Anthropic의 상표예요. Agent Office는 Anthropic의 공식 제품이 아니며, 사용자의 CLI를 그대로 실행해요.</p>
+  <div class="foot-cols">
+    <div class="foot-brand">
+      <b>Cozy Office</b>
+      <p data-en="A tiny office where AI staff clock in">AI 직원들이 출근하는 작은 사무실</p>
+    </div>
+    <nav class="foot-col" aria-label="제품" data-en-aria-label="Product">
+      <h2 data-en="Product">제품</h2>
+      <a href="#floors" data-en="Tour">둘러보기</a>
+      <a href="#start" data-en="Get started">시작하기</a>
+      <a href="#download" data-en="Download">다운로드</a>
+    </nav>
+    <nav class="foot-col" aria-label="개발" data-en-aria-label="Development">
+      <h2 data-en="Open source">오픈소스</h2>
+      <a href="https://github.com/pj002321/agent_office_env" rel="noopener">GitHub</a>
+      <a href="https://github.com/pj002321/agent_office_env/releases" rel="noopener" data-en="Release notes">릴리스 노트</a>
+      <a href="https://github.com/pj002321/agent_office_env/issues" rel="noopener" data-en="Report a bug">버그 제보</a>
+    </nav>
+    <address class="foot-col">
+      <h2 data-en="Contact">문의</h2>
+      <a href="mailto:t55300354@gmail.com">t55300354@gmail.com</a>
+      <span data-en="Partnerships, bugs and ideas all welcome">제휴 · 버그 · 기능 제안 모두 환영해요</span>
+    </address>
+  </div>
+  <p class="foot-legal" data-en="© 2026 Cozy Office · MIT License · Claude and Claude Code are trademarks of Anthropic. Cozy Office is not an official Anthropic product; it runs your own CLI as-is.">© 2026 Cozy Office · MIT License · Claude와 Claude Code는 Anthropic의 상표예요. Cozy Office는 Anthropic의 공식 제품이 아니며, 사용자의 CLI를 그대로 실행해요.</p>
 </footer>
 
 <script src="main.js" defer></script>

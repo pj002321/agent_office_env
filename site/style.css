@@ -48,6 +48,9 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
 .nav nav a { font: 15px var(--display); text-decoration: none; padding: 8px 12px; border-radius: 12px; opacity: .9; }
 .nav nav a:hover { background: rgba(255, 255, 255, .14); opacity: 1; }
 .nav .btn-small { background: var(--butter); color: #5a3e00; box-shadow: var(--press); }
+.lang { font: 14px var(--display); color: #fff; background: rgba(255, 255, 255, .14); border: 0; border-radius: 10px; padding: 7px 10px; cursor: pointer; }
+.lang:hover { background: rgba(255, 255, 255, .24); }
+@media (max-width: 720px) { .lang { margin-left: auto; } }
 
 /* ---------- hero ---------- */
 /* art is width-fit and its hilltop sits ~48% down, so height must grow with width to keep the hill under the copy */
@@ -69,7 +72,7 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
 .dots i:nth-child(2) { background: var(--butter); }
 .dots i:nth-child(3) { background: #5fb873; }
 .wtitle { font: 14px var(--display); color: var(--ink-soft); margin: 0 auto; translate: -30px 0; }
-.screen { position: relative; aspect-ratio: 2136 / 1292; border-radius: 14px; overflow: hidden; background: var(--sky-mid); }
+.screen { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; background: var(--sky-mid); }
 .shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transform: scale(1.025); transition: opacity .6s var(--ease), transform 1.2s var(--ease); }
 .shot.is-on { opacity: 1; transform: none; }
 .scenes { display: flex; gap: 4px; width: max-content; max-width: 100%; margin: -26px auto 0; position: relative; padding: 6px; border-radius: 20px; background: var(--teal-deep); box-shadow: var(--shadow); overflow-x: auto; scrollbar-width: none; }
@@ -152,9 +155,16 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
 .os.is-mine > svg { background: var(--leaf); color: #fff; }
 .download .fine { color: var(--ink-soft); }
 
-.foot { width: min(var(--wrap), calc(100% - 40px)); margin: 0 auto; padding: 40px 0 56px; text-align: center; font-size: 14px; color: var(--ink-soft); }
-.foot p { margin: 4px 0; }
-.foot b { font-family: var(--display); font-weight: 400; color: var(--ink); }
+.foot { width: min(var(--wrap), calc(100% - 40px)); margin: 0 auto; padding: 56px 0 48px; font-size: 14px; color: var(--ink-soft); }
+.foot-cols { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 32px; padding-bottom: 32px; border-bottom: 1px solid var(--line); }
+.foot-brand b { font: 22px var(--display); color: var(--ink); }
+.foot-brand p { margin: 6px 0 0; }
+.foot-col { display: grid; align-content: start; gap: 8px; font-style: normal; }
+.foot-col h2 { font: 15px var(--display); color: var(--ink); margin-bottom: 4px; }
+.foot-col a { text-decoration: none; width: fit-content; }
+.foot-col a:hover { color: var(--teal); text-decoration: underline; }
+.foot-legal { margin: 24px 0 0; font-size: 13px; }
+@media (max-width: 720px) { .foot-cols { grid-template-columns: 1fr 1fr; } .foot-brand { grid-column: 1 / -1; } }
 
 /* ---------- small screens ---------- */
 @media (max-width: 900px) {
@@ -174,7 +184,6 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
   .window { padding: 0 6px 6px; border-radius: 18px; }
   .titlebar { height: 32px; }
   .screen { aspect-ratio: 4 / 3; }
-  .shot[data-scene="approve"] { object-position: right; }
   .pair img { aspect-ratio: 1; object-fit: cover; }
   .scenes { margin-top: 12px; width: 100%; }
   .scenes { justify-content: space-between; gap: 2px; }

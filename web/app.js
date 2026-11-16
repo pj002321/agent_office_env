@@ -254,7 +254,7 @@ await world.ready();
 // first run: what this app does with the user's machine and accounts, before anything starts
 const TERMS = 'office-terms-v1';
 if (!localStorage.getItem(TERMS)) {
-  const ok = await paper({ kind: '입주 계약서', title: 'Agent Office에 오신 걸 환영해요',
+  const ok = await paper({ kind: '입주 계약서', title: 'Cozy Office에 오신 걸 환영해요',
     intro: '사무실을 열기 전에 이 앱이 하는 일을 알려 드려요.',
     items: [['내 CLI로 일해요', '이 PC에 설치된 claude · codex CLI를 대표님 계정 그대로 실행해요. 사용량은 대표님 요금제에서 차감돼요.'],
             ['비밀번호는 몰라요', '로그인은 각 CLI의 공식 화면에서만 해요. 이 앱은 토큰이나 비밀번호를 읽거나 저장하지 않아요.'],

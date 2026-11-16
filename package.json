@@ -13,7 +13,7 @@
   },
   "build": {
     "appId": "io.github.pj002321.agentoffice",
-    "productName": "Agent Office",
+    "productName": "Cozy Office",
     "files": ["app/**", "web/**", "package.json"],
     "directories": { "output": "dist" },
     "win": { "target": "nsis", "artifactName": "AgentOffice-Setup.${ext}" },
