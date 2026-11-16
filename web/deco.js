@@ -78,7 +78,7 @@ function render() {
       <article class="card">
         <span class="swatch coin">P</span>
         <div class="body"><h3>${P(p.points)}</h3><p class="desc">₩${p.won.toLocaleString('ko-KR')}</p></div>
-        <footer><span></span><button class="act get" data-pack="${esc(p.id)}">${wallet.freeCharge ? '무료 충전 (테스트)' : `₩${p.won.toLocaleString('ko-KR')} 충전`}</button></footer>
+        <footer><span></span><button class="act get" disabled>준비 중</button></footer>
       </article>`).join('');
     return;
   }
@@ -113,12 +113,6 @@ $('#deco').onclick = e => {
   const b = t.closest('[data-buy]'); if (b) { b.disabled = true; return buy(item(b, 'buy')); }
   const on = t.closest('[data-equip]'); if (on) return act(office.shopEquip(on.dataset.equip, true, fid), item(on, 'equip'));
   const off = t.closest('[data-off]'); if (off) return act(office.shopEquip(off.dataset.off, false, fid), item(off, 'off'));
-  const pack = t.closest('[data-pack]');
-  if (pack) return act(office.shopCharge(pack.dataset.pack), { name: '포인트 충전' }).then(r => {
-    if (!r) return;
-    sfx('coin'); bump(r.points);
-    notify({ icon: 'check', tone: 'done', title: `${P(r.points)} 충전!`, body: `테스트용 무료 충전이에요. 지금 ${P(wallet.points)}` });
-  });
 };
 $('#deco-floor').onchange = e => { fid = e.target.value; render(); };
 $('#deco').onkeydown = e => { if (e.key === 'Escape') closeDeco(); };

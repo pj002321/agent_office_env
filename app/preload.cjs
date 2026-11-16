@@ -24,7 +24,6 @@ contextBridge.exposeInMainWorld('office', {
   wallet: () => ipcRenderer.invoke('wallet'),
   shopBuy: (id, floor) => ipcRenderer.invoke('shop-buy', id, floor),
   shopEquip: (id, on, floor) => ipcRenderer.invoke('shop-equip', id, on, floor),
-  shopCharge: id => ipcRenderer.invoke('shop-charge', id),
   attend: () => ipcRenderer.invoke('attend'),
   headroom: () => ipcRenderer.invoke('headroom'),
   setHeadroom: on => ipcRenderer.invoke('set-headroom', on),

@@ -72,10 +72,7 @@ test('load fills or sanitizes attendance', () => {
     assert.deepStrictEqual(shop.load({ attend }).attend, { day: 0, last: null });
 });
 
-test('temporary free charge adds pack points', () => {
-  const s = shop.fresh();
-  assert.deepStrictEqual(shop.charge(s, 'p500'), { ok: true, points: 500 });
-  assert.strictEqual(s.points, 500);
-  assert.strictEqual(shop.charge(s, 'nope').ok, false);
-  assert.strictEqual(s.points, 500);
+
+test('point packs cannot be charged yet', () => {
+  assert.strictEqual(shop.charge, undefined);
 });

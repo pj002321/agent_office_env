@@ -21,9 +21,7 @@ const ITEMS = [
   { id: 'vending', slot: 'furniture', name: '자판기', desc: '왼쪽 벽의 음료 자판기', price: 200, swatch: '#ff8f7a' },
   { id: 'lights', slot: 'furniture', name: '꼬마전구', desc: '뒷벽을 따라 반짝이는 전구 줄', price: 120, swatch: '#ffd45e' },
 ];
-// TEMPORARY: packs are free while testing. Set false (or replace charge() with real payment
-// verification via Stripe / Toss / app store) before release.
-const FREE_CHARGE = true;
+// Point packs are shown as "준비 중" until real payment (with accounts) is wired up; no charge path exists yet.
 const PACKS = [
   { id: 'p500', points: 500, won: 1100 },
   { id: 'p1500', points: 1500, won: 3300 },
@@ -85,14 +83,6 @@ function equip(s, id, on = true, fid) {
   return { ok: true };
 }
 
-function charge(s, id) {
-  const p = PACKS.find(x => x.id === id);
-  if (!p) return { ok: false, message: '없는 충전 상품이에요.' };
-  if (!FREE_CHARGE) return { ok: false, message: '결제 연결 준비 중이에요.' };
-  s.points += p.points;
-  return { ok: true, points: p.points };
-}
-
 // One claim per local day (today = 'YYYY-MM-DD' from the caller). Skipped days don't reset the board.
 function attend(s, today) {
   if (s.attend.last === today) return { ok: false, message: '오늘은 이미 출석했어요.' };
@@ -103,4 +93,4 @@ function attend(s, today) {
   return { ok: true, day, points };
 }
 
-module.exports = { ITEMS, PACKS, EARN, REWARDS, FREE_CHARGE, fresh, load, room, earn, buy, equip, charge, attend };
+module.exports = { ITEMS, PACKS, EARN, REWARDS, fresh, load, room, earn, buy, equip, attend };
