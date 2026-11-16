@@ -33,7 +33,7 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
 .btn:hover { transform: translateY(-2px); }
 .btn:active { transform: translateY(1px); }
 .btn-primary { background: var(--leaf); color: #fff; box-shadow: var(--press), 0 10px 22px rgba(31, 98, 51, .26), 0 2px 4px rgba(31, 98, 51, .14); }
-.btn-primary:hover { background: #2d8a4a; box-shadow: var(--press), 0 14px 28px rgba(31, 98, 51, .3), 0 3px 6px rgba(31, 98, 51, .14); }
+.btn-primary:hover { background: var(--leaf-deep); box-shadow: var(--press), 0 14px 28px rgba(31, 98, 51, .3), 0 3px 6px rgba(31, 98, 51, .14); }
 .btn-primary:active { box-shadow: inset 0 2px 0 rgba(0, 0, 0, .14), 0 4px 10px rgba(31, 98, 51, .22); }
 .btn-quiet { background: rgba(255, 255, 255, .82); color: var(--ink); box-shadow: var(--press), var(--shadow); }
 .btn-small { font-size: 15px; padding: 9px 16px; border-radius: 13px; background: var(--leaf); color: #fff; box-shadow: var(--press); }
@@ -85,7 +85,7 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
   background: repeating-linear-gradient(var(--teal) 0 14px, #2f8a80 14px 18px); opacity: .35; }
 .car { position: sticky; top: 46vh; width: 40px; color: var(--teal-deep); filter: drop-shadow(0 6px 10px rgba(28, 98, 91, .25)); }
 .car svg { width: 40px; height: 52px; fill: var(--butter); stroke-width: 2.4; display: block; }
-.car-floor { position: absolute; top: -26px; left: 50%; translate: -50% 0; font: 13px var(--display); background: var(--teal-deep); color: var(--butter); border-radius: 8px; padding: 1px 7px; }
+.car-floor { position: absolute; white-space: nowrap; top: -26px; left: 50%; translate: -50% 0; font: 13px var(--display); background: var(--teal-deep); color: var(--butter); border-radius: 8px; padding: 1px 7px; }
 .car.ding svg { animation: ding .5s var(--ease); }
 @keyframes ding { 30% { transform: translateY(3px) scaleY(.96); } }
 
@@ -109,8 +109,9 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
   left: calc(-100% * var(--x) / var(--w)); top: calc(-100% * var(--y) / var(--h)); }
 .floor-wide .copy { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 8px clamp(24px, 4vw, 56px); align-items: start; }
 .floor-wide .copy > p { margin-top: 0; }
+.floor-wide .copy h2 { grid-row: span 2; }   /* lets the points sit right under the paragraph */
 .floor-wide .points { margin-top: 18px; grid-column: 2; }
-@media (max-width: 900px) { .floor-wide .copy { grid-template-columns: 1fr; } .floor-wide .points { grid-column: auto; } .floor-wide .copy > p { margin-top: 16px; } }
+@media (max-width: 900px) { .floor-wide .copy { grid-template-columns: 1fr; } .floor-wide .copy h2 { grid-row: auto; } .floor-wide .points { grid-column: auto; } .floor-wide .copy > p { margin-top: 16px; } }
 .plate figcaption { font: 15px var(--display); color: var(--ink-soft); padding: 10px 8px 4px; }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
@@ -161,12 +162,17 @@ code { font-family: ui-monospace, 'Cascadia Mono', Menlo, monospace; font-size: 
   body { font-size: 16px; }
   .nav nav { display: none; }
   .nav { gap: 10px; justify-content: space-between; }
-  .hero { min-height: 88svh; background-position: 46% bottom; border-radius: 26px; }
-  .hero-copy { padding-top: 104px; }
+  .hero { min-height: calc(133vw + 300px); padding-bottom: calc(133vw - 240px);   /* fixed height: the font swap can't shove the window down */ border-radius: 26px;   /* art (220% wide) parks its hill just under the copy */
+    background: url(img/hero-world-1280.webp) 44% 100% / 220% auto no-repeat, var(--sky-top); }   /* art's top row is --sky-top: no seam */
+  .hero-copy { padding: 104px 16px 0; }
+  .hero .fine { font-size: 13px; }
   .lede br, .hero h1 br { display: none; }
-  .showcase { width: calc(100% - 24px); margin-top: -18svh; }
+  .showcase { width: calc(100% - 24px); margin-top: -40px; }
   .window { padding: 0 6px 6px; border-radius: 18px; }
   .titlebar { height: 32px; }
+  .screen { aspect-ratio: 4 / 3; }
+  .shot[data-scene="approve"] { object-position: right; }
+  .pair img { aspect-ratio: 1; object-fit: cover; }
   .scenes { margin-top: 12px; width: 100%; }
   .scenes { justify-content: space-between; gap: 2px; }
   .scenes button { flex: 1; justify-content: center; gap: 4px; padding: 8px 4px; font-size: 14px; }

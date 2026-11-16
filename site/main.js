@@ -42,9 +42,12 @@ const CAPTION = {
 const tabs = $$('.scenes [role="tab"]');
 const shots = $$('.shot');
 const caption = document.querySelector('[data-caption]');
+// hidden scenes wait for the page to finish loading so they don't compete with the first view
+const loadShot = s => { if (s.dataset.srcset) { s.srcset = s.dataset.srcset; delete s.dataset.srcset; } };
+addEventListener('load', () => shots.forEach(loadShot));
 function show(scene) {
   for (const t of tabs) t.setAttribute('aria-selected', String(t.dataset.scene === scene));
-  for (const s of shots) s.classList.toggle('is-on', s.dataset.scene === scene);
+  for (const s of shots) { if (s.dataset.scene === scene) loadShot(s); s.classList.toggle('is-on', s.dataset.scene === scene); }
   caption.textContent = CAPTION[scene];
 }
 // the tour plays itself until the visitor picks a scene, and holds still while hovered or off-screen
@@ -59,7 +62,7 @@ setInterval(() => {
   const i = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
   show(tabs[(i + 1) % tabs.length].dataset.scene);
 }, 5200);
-for (const t of tabs) t.addEventListener('click', () => { auto = false; show(t.dataset.scene); });
+for (const t of tabs) t.addEventListener('click', () => { auto = false; caption.ariaLive = 'polite'; show(t.dataset.scene); });   // only announce scenes the visitor picked
 document.querySelector('.scenes').addEventListener('keydown', e => {
   const i = tabs.indexOf(document.activeElement);
   if (i < 0 || !['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
