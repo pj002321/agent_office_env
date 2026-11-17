@@ -73,6 +73,11 @@ test('load fills or sanitizes attendance', () => {
 });
 
 
-test('point packs cannot be charged yet', () => {
-  assert.strictEqual(shop.charge, undefined);
+test('claim grants each paid order once and skips refunds and junk', () => {
+  const s = shop.fresh();
+  const list = [{ id: '1', points: 500, status: 'paid' }, { id: '2', points: 1500, status: 'refunded' }, { id: '3', points: -5, status: 'paid' }];
+  assert.deepStrictEqual(shop.claim(s, list), { ok: true, points: 500 });
+  assert.deepStrictEqual(shop.claim(s, list), { ok: false, points: 0 });
+  assert.strictEqual(s.points, 500);
+  assert.deepStrictEqual(shop.load(JSON.parse(JSON.stringify(s))).claimed, ['1']);
 });

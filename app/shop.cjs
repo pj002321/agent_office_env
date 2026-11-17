@@ -21,11 +21,11 @@ const ITEMS = [
   { id: 'vending', slot: 'furniture', name: '자판기', desc: '왼쪽 벽의 음료 자판기', price: 200, swatch: '#ff8f7a' },
   { id: 'lights', slot: 'furniture', name: '꼬마전구', desc: '뒷벽을 따라 반짝이는 전구 줄', price: 120, swatch: '#ffd45e' },
 ];
-// Point packs are shown as "준비 중" until real payment (with accounts) is wired up; no charge path exists yet.
+// Packs are bought on the web checkout (app/account.cjs); points arrive through claim() once the order is on the server.
 const PACKS = [
-  { id: 'p500', points: 500, won: 1100 },
-  { id: 'p1500', points: 1500, won: 3300 },
-  { id: 'p5000', points: 5000, won: 9900 },
+  { id: 'p800', points: 800, usd: 2.99 },
+  { id: 'p1500', points: 1500, usd: 4.99 },
+  { id: 'p3500', points: 3500, usd: 9.99 },
 ];
 const EARN = 10;   // points per order
 const REWARDS = [20, 20, 30, 30, 50, 50, 100];   // 출석체크 day 1..7, then the board starts over
@@ -35,7 +35,7 @@ const FLOOR_ID = /^[\w-]{1,64}$/;
 // building is one for the whole tower; wall/floor/furniture are per floor in rooms[floorId].
 // equip.wall/floor + furniture are what a floor shows until it's decorated on its own (older saves keep their look).
 const fresh = () => ({ points: 0, owned: ITEMS.filter(i => !i.price).map(i => i.id),
-  equip: { building: 'house', wall: 'wall-theme', floor: 'floor-wood' }, furniture: [], rooms: {}, attend: { day: 0, last: null } });
+  equip: { building: 'house', wall: 'wall-theme', floor: 'floor-wood' }, furniture: [], rooms: {}, attend: { day: 0, last: null }, claimed: [] });
 const room = (s, fid) => s.rooms[fid] ?? { wall: s.equip.wall, floor: s.equip.floor, furniture: [...s.furniture] };
 function load(raw) {   // fills gaps in an older or partial save
   const s = fresh();
@@ -57,6 +57,7 @@ function load(raw) {   // fills gaps in an older or partial save
   const a = raw.attend;
   if (a && Number.isInteger(a.day) && a.day >= 0 && a.day <= REWARDS.length && (a.last === null || /^\d{4}-\d{2}-\d{2}$/.test(a.last)))
     s.attend = { day: a.day, last: a.last };
+  if (Array.isArray(raw.claimed)) s.claimed = raw.claimed.filter(id => typeof id === 'string');
   return s;
 }
 const earn = s => { s.points += EARN; return s; };
@@ -83,6 +84,19 @@ function equip(s, id, on = true, fid) {
   return { ok: true };
 }
 
+// Grants each paid server order once per wallet. ponytail: the claimed list lives in the local wallet, so a reinstall
+// re-grants past orders ("restore purchases"); move the balance server-side if that ever matters.
+function claim(s, purchases) {
+  let points = 0;
+  for (const p of purchases) {
+    if (p.status !== 'paid' || typeof p.id !== 'string' || !Number.isInteger(p.points) || p.points <= 0 || s.claimed.includes(p.id)) continue;
+    s.claimed.push(p.id);
+    points += p.points;
+  }
+  s.points += points;
+  return { ok: points > 0, points };
+}
+
 // One claim per local day (today = 'YYYY-MM-DD' from the caller). Skipped days don't reset the board.
 function attend(s, today) {
   if (s.attend.last === today) return { ok: false, message: '오늘은 이미 출석했어요.' };
@@ -93,4 +107,4 @@ function attend(s, today) {
   return { ok: true, day, points };
 }
 
-module.exports = { ITEMS, PACKS, EARN, REWARDS, fresh, load, room, earn, buy, equip, attend };
+module.exports = { ITEMS, PACKS, EARN, REWARDS, fresh, load, room, earn, buy, equip, claim, attend };

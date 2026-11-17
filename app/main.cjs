@@ -14,6 +14,7 @@ const skills = require('./skills.cjs');
 const history = require('./history.cjs');
 const shop = require('./shop.cjs');
 const music = require('./music.cjs');
+const account = require('./account.cjs')(path.join(app.getPath('userData'), 'account.bin'));
 
 // Tools that change things → 대표 must approve. Read-only tools run freely.
 const ASK_TOOLS = 'Bash|Edit|MultiEdit|Write|NotebookEdit|WebFetch|WebSearch';
@@ -72,7 +73,7 @@ const WALLET = path.join(app.getPath('userData'), 'wallet.json');
 let wallet;
 try { wallet = shop.load(JSON.parse(fs.readFileSync(WALLET, 'utf8'))); } catch { wallet = shop.fresh(); }
 const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const walletView = () => ({ ...wallet, items: shop.ITEMS, packs: shop.PACKS, earn: shop.EARN,
+const walletView = () => ({ ...wallet, items: shop.ITEMS, packs: shop.PACKS, earn: shop.EARN, account: account.view(),
   rewards: shop.REWARDS, attendedToday: wallet.attend.last === localDate() });
 const saveWallet = () => fs.writeFileSync(WALLET, JSON.stringify(wallet, null, 2));
 
@@ -280,6 +281,11 @@ const fidOf = fid => floors.some(f => f.id === fid) ? fid : undefined;
 const shopCall = r => { if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; };
 ipcMain.handle('shop-buy', (_, id, fid) => shopCall(shop.buy(wallet, String(id), fidOf(fid))));
 ipcMain.handle('shop-equip', (_, id, on, fid) => shopCall(shop.equip(wallet, String(id), on !== false, fidOf(fid))));
+const fail = e => ({ ok: false, message: e.message, wallet: walletView() });
+ipcMain.handle('login', () => account.login().then(() => ({ ok: true, wallet: walletView() }), fail));
+ipcMain.handle('logout', () => { account.logout(); return { ok: true, wallet: walletView() }; });
+ipcMain.handle('checkout', (_, pack) => account.checkout(String(pack)).then(() => ({ ok: true }), fail));
+ipcMain.handle('claim', () => account.purchases().then(list => shopCall(shop.claim(wallet, list)), fail));
 ipcMain.handle('attend', () => { const r = shop.attend(wallet, localDate()); if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; });
 ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
 

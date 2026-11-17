@@ -74,11 +74,17 @@ function render() {
     return;
   }
   if (tab === 'packs') {
-    grid.innerHTML = wallet.packs.map(p => `
+    const { ready, user } = wallet.account;
+    const who = !ready ? '' : `<p class="muted" style="grid-column:1/-1">${user
+      ? `${esc(user.email || 'GitHub 계정')}으로 로그인했어요. 결제가 끝나면 이 창으로 돌아오는 순간 포인트가 들어와요. <button class="act wear" data-logout>로그아웃</button>`
+      : '충전한 포인트는 계정에 기록돼요. 처음 충전할 때 GitHub로 로그인해요.'}</p>`;
+    grid.innerHTML = who + wallet.packs.map(p => `
       <article class="card">
         <span class="swatch coin">P</span>
-        <div class="body"><h3>${P(p.points)}</h3><p class="desc">₩${p.won.toLocaleString('ko-KR')}</p></div>
-        <footer><span></span><button class="act get" disabled>준비 중</button></footer>
+        <div class="body"><h3>${P(p.points)}</h3><p class="desc">$${p.usd}</p></div>
+        <footer><span></span>${ready
+          ? `<button class="act get" data-pack="${esc(p.id)}">$${p.usd} 결제</button>`
+          : '<button class="act get" disabled>준비 중</button>'}</footer>
       </article>`).join('');
     return;
   }
@@ -90,7 +96,7 @@ async function act(call, it) {
   // rejects with "No handler registered" when main.cjs changed after launch — renderer reload doesn't reload main
   const r = await call.catch(() => ({ ok: false, message: '앱을 완전히 껐다가 다시 켜 주세요.' }));
   if (r.wallet) setWallet(r.wallet);
-  if (!r.ok) return notify({ icon: 'key', tone: 'quest', title: `${it.name}: 할 수 없어요`, body: r.message || '알 수 없는 문제가 생겼어요.' });
+  if (!r.ok) { notify({ icon: 'key', tone: 'quest', title: `${it.name}: 할 수 없어요`, body: r.message || '알 수 없는 문제가 생겼어요.' }); return; }
   return r;
 }
 async function buy(it) {
@@ -113,10 +119,28 @@ $('#deco').onclick = e => {
   const b = t.closest('[data-buy]'); if (b) { b.disabled = true; return buy(item(b, 'buy')); }
   const on = t.closest('[data-equip]'); if (on) return act(office.shopEquip(on.dataset.equip, true, fid), item(on, 'equip'));
   const off = t.closest('[data-off]'); if (off) return act(office.shopEquip(off.dataset.off, false, fid), item(off, 'off'));
+  if (t.closest('[data-logout]')) return act(office.logout(), { name: '로그아웃' });
+  const pack = t.closest('[data-pack]');
+  if (pack) return (async () => {
+    if (!wallet.account.user && !(await act(office.login(), { name: '로그인' }))) return;
+    if (await act(office.checkout(pack.dataset.pack), { name: '포인트 충전' }))
+      notify({ icon: 'check', tone: 'quest', title: '브라우저에서 결제해 주세요', body: '결제가 끝나고 앱으로 돌아오면 포인트가 들어와요.' });
+  })();
 };
 $('#deco-floor').onchange = e => { fid = e.target.value; render(); };
 $('#deco').onkeydown = e => { if (e.key === 'Escape') closeDeco(); };
 
 export const setNotify = fn => notify = fn;
 
-office.wallet().then(setWallet);
+// paid orders land on the server via webhook; pick them up whenever the user comes back to the app
+async function claim() {
+  if (!wallet?.account.user) return;
+  const r = await office.claim().catch(() => null);
+  if (r?.wallet) setWallet(r.wallet);
+  if (!r?.ok) return;
+  sfx('coin'); bump(r.points);
+  notify({ icon: 'check', tone: 'done', title: `${P(r.points)} 충전!`, body: `결제해 주셔서 고마워요. 지금 ${P(wallet.points)}` });
+}
+addEventListener('focus', claim);
+
+office.wallet().then(setWallet).then(claim);
