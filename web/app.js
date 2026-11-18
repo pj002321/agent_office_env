@@ -132,12 +132,28 @@ function setArranging(on) {
   $('#arrange').setAttribute('aria-pressed', String(on));
   $('#arrange').lastChild.textContent = on ? '완료' : '배치 바꾸기';
   $('#arrange-reset').hidden = !on;
+  if (!on) $('#arrange-drop').hidden = true;
   $('#plaque').toggleAttribute('data-arranging', on);
   const f = floors.find(x => x.id === world.currentFloor());
-  $('#plaque-path').textContent = on ? '물건을 끌어서 옮기고, 휠이나 R 키로 돌려요' : f?.path || '';
+  $('#plaque-path').textContent = on ? '눌러 고르고 끌어 옮기기 · 휠·R 회전 · Delete 빼기' : f?.path || '';
 }
 $('#arrange').onclick = () => setArranging($('#arrange').getAttribute('aria-pressed') !== 'true');
 $('#arrange-reset').onclick = () => world.resetLayout();
+// 빼기: take the selected piece out of this floor (desks stay: staff sit at them). It comes back from 꾸미기 상점 → 가구.
+let pickedPiece = null;
+const pieceItem = k => k?.startsWith('plant') ? 'plants' : k?.startsWith('desk') ? null : k;
+world.onPickChange(k => { pickedPiece = k; $('#arrange-drop').hidden = !pieceItem(k); });
+async function dropPiece() {
+  const id = pieceItem(pickedPiece), fid = world.currentFloor();
+  if (!id || !fid) return;
+  const r = await office.shopEquip(id, false, fid);
+  if (r.wallet) deco.setWallet(r.wallet);
+  if (!r.ok) return toast({ id: 'drop', icon: 'key', tone: 'quest', ttl: 4000, title: '뺄 수 없어요', body: r.message || '' });
+  world.dropPicked();
+  toast({ id: 'drop', icon: 'check', tone: 'done', ttl: 4000, title: '뺐어요', body: '꾸미기 상점 → 가구에서 다시 배치할 수 있어요.' });
+}
+$('#arrange-drop').onclick = dropPiece;
+addEventListener('keydown', e => { if ((e.key === 'Delete' || e.key === 'Backspace') && !$('#arrange-drop').hidden && !e.target.closest?.('input, textarea')) dropPiece(); });
 world.onLayoutChange((id, layout) => {
   office.setLayout(id, layout);
   const f = floors.find(x => x.id === id);
@@ -191,17 +207,22 @@ function log(entry) {
   if (logs.length > 400) logs.shift();
   renderLog();
 }
+const CHAT = new Set(['order', 'done', 'past']);   // conversation lines; the rest is work activity
+let logFloor;
 function renderLog() {
-  const cur = world.currentFloor();
-  const rows = logs.filter(l => !cur || l.floor === cur).slice(-80).reverse();
+  const cur = world.currentFloor(), ol = $('#journal ol');
+  const stick = cur !== logFloor || ol.scrollHeight - ol.scrollTop - ol.clientHeight < 60;   // don't yank a reader scrolled up
+  logFloor = cur;
+  const rows = logs.filter(l => !cur || l.floor === cur).slice(-120);
   $('#journal-title').textContent = cur ? '이 층의 일지' : '건물 전체 일지';
   $('#talks-btn').hidden = !cur;
   const today = new Date().toDateString();
-  $('#journal ol').innerHTML = rows.length ? rows.map(l => {
+  ol.innerHTML = rows.length ? rows.map(l => {
     const fi = floors.findIndex(f => f.id === l.floor);
-    return `<li data-tone="${l.tone}"><time>${l.at.toDateString() === today ? l.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : `${l.at.getMonth() + 1}/${l.at.getDate()}`}</time>
+    return `<li data-tone="${l.tone}"${CHAT.has(l.tone) ? ' class="chat"' : ''}><time>${l.at.toDateString() === today ? l.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : `${l.at.getMonth() + 1}/${l.at.getDate()}`}</time>
       <span class="who">${cur ? '' : `<span class="chip">${fi + 2}F</span>`}${esc(l.who)}</span><span class="txt">${ICON[l.icon] || ''}${esc(l.text)}</span></li>`;
   }).join('') : `<li class="none">${cur ? '아직 조용해요. 아래에서 팀장에게 일을 맡겨 보세요.' : '층에 들어가 일을 맡기면 여기에 기록돼요.'}</li>`;
+  if (stick) ol.scrollTop = ol.scrollHeight;
 }
 
 // ---------- past conversations (from claude's own transcripts) ----------
@@ -210,7 +231,7 @@ async function loadPast(id) {
   pastLoaded.add(id);
   const lead = world.floorState(id)?.lead || '팀장';
   for (const m of await office.history(id)) logs.push({ floor: id, at: new Date(m.at), tone: m.me ? 'order' : 'past',
-    who: m.me ? '나' : lead, rank: m.me ? '대표' : '팀장', text: (m.me ? '지시: ' : '') + (m.text.length > 300 ? m.text.slice(0, 300) + '…' : m.text) });
+    who: m.me ? '나' : lead, rank: m.me ? '대표' : '팀장', text: (m.me ? '지시: ' : '') + m.text });
   logs.sort((a, b) => a.at - b.at);
 }
 async function openTalks() {

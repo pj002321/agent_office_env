@@ -43,6 +43,9 @@
   .bubble .said { display: block; max-height: 9.8em; overflow-y: auto; overscroll-behavior: contain; }
   .doing { font-size: 12px; color: #1f6b3a; background: rgba(227, 244, 228, .92); border-radius: 8px; padding: 0 7px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
   .doing:empty { display: none; }
+  .team-sign { font: 13px var(--display); background: rgba(255,255,255,.88); color: var(--ink-soft); border-radius: 12px; padding: 3px 10px; box-shadow: 0 2px 5px rgba(74,58,46,.15); white-space: nowrap; pointer-events: none; }
+  .team-sign[data-state="busy"] { background: var(--card); color: var(--ink); }
+  .team-sign[data-state="ask"] { background: var(--coral); color: #fff; }
   .floor-sign { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 18px; padding: 4px 10px 4px 4px; box-shadow: var(--shadow); font: 15px var(--display); transition: transform .2s; }
   .floor-sign:hover { transform: translateX(4px); }
   .floor-sign .fl { background: var(--brass); border-radius: 50%; width: 34px; height: 34px; display: grid; place-items: center; }
@@ -82,7 +85,7 @@
   #add-floor:hover { transform: translateY(-1px); }
 
   /* ---------- plaque ---------- */
-  #plaque { position: fixed; top: 16px; left: calc(260px + (100vw - 606px) / 2); translate: -50% 0; display: flex; align-items: center; gap: 14px; background: #8a5a3c; color: #fff3dc; border-radius: 20px; padding: 8px 8px 8px 20px; box-shadow: var(--shadow); max-width: calc(100vw - 640px); }
+  #plaque { position: fixed; top: 16px; left: calc(260px + (100vw - 656px) / 2); translate: -50% 0; display: flex; align-items: center; gap: 14px; background: #8a5a3c; color: #fff3dc; border-radius: 20px; padding: 8px 8px 8px 20px; box-shadow: var(--shadow); max-width: calc(100vw - 690px); }
   #plaque div { min-width: 0; }
   #plaque-name { font: 20px var(--display); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #plaque-path { font-size: 12px; opacity: .8; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -93,7 +96,7 @@
   #leave { display: flex; align-items: center; gap: 6px; background: #fff3dc; color: #6b4229; border-radius: 14px; padding: 8px 12px; font: 14px var(--display); white-space: nowrap; }
 
   /* ---------- right column ---------- */
-  #side { position: fixed; right: 16px; top: 16px; bottom: 16px; width: 330px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+  #side { position: fixed; right: 16px; top: 16px; bottom: 16px; width: 380px; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
   #side > * { pointer-events: auto; }
   #asks { display: flex; flex-direction: column; gap: 10px; }
   .ask { background: var(--card); border-radius: 20px; padding: 13px 15px; box-shadow: var(--shadow); border: 3px solid var(--coral); animation: pop .35s cubic-bezier(.2,1.4,.4,1); }
@@ -107,7 +110,7 @@
   .no { background: #f3ede4; }
   .visit { margin-left: auto; color: var(--teal-deep); padding-right: 8px !important; }
   .chip { font: 12px var(--display); background: #fff3dc; color: #8a5a3c; border-radius: 8px; padding: 1px 7px; margin-right: 4px; }
-  #journal { flex: 0 1 auto; max-height: 46vh; min-height: 0; display: flex; flex-direction: column; background: rgba(255,255,255,.94); border-radius: 22px; box-shadow: var(--shadow); padding: 14px 6px 8px 16px; }
+  #journal { flex: 1; min-height: 0; display: flex; flex-direction: column; background: rgba(255,255,255,.94); border-radius: 22px; box-shadow: var(--shadow); padding: 14px 6px 8px 16px; }
   #journal-title { font: 18px var(--display); margin: 0; }
   #journal > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 8px 8px 0; }
   #talks-btn { display: inline-flex; align-items: center; gap: 4px; font: 13px var(--display); color: var(--teal-deep); background: #e1f4f1; border-radius: 12px; padding: 4px 10px; }
@@ -120,7 +123,12 @@
   #talks b { grid-column: 1 / -1; font: 14px var(--display); font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #talks button:has(svg) b { grid-column: 2; }
   #talks small { grid-column: 1 / -1; font-size: 11px; color: var(--ink-soft); }
-  #journal ol { list-style: none; margin: 0; padding: 0 8px 0 0; overflow: auto; font-size: 13px; }
+  #journal ol { list-style: none; margin: 0; padding: 0 8px 0 0; overflow: auto; font-size: 13px; flex: 1; min-height: 0; }
+  /* conversation (orders and the lead's answers) reads as chat bubbles; work lines stay small */
+  #journal li.chat { display: block; margin: 8px 18px 8px 0; padding: 8px 12px; border: 0; border-radius: 16px; background: #eef6f4; }
+  #journal li.chat[data-tone="order"] { margin: 8px 0 8px 36px; background: #fff3dc; }
+  #journal li.chat time { float: right; font-size: 11px; }
+  #journal li.chat .txt { display: block; margin-top: 2px; color: var(--ink); font-size: 14px; line-height: 1.5; white-space: pre-wrap; }
   #journal li { display: grid; grid-template-columns: 40px 1fr; column-gap: 6px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
   #journal li.none { display: block; color: var(--ink-soft); border: 0; padding: 4px 0; }
   #journal time { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
@@ -134,23 +142,22 @@
   #journal li[data-tone="order"] .who::before { background: #8a5a3c; }
 
   /* ---------- order bar ---------- */
-  #order { position: fixed; left: calc(260px + (100vw - 606px) / 2); bottom: 18px; translate: -50% 0; width: min(640px, calc(100vw - 650px)); background: var(--card); border-radius: 24px; padding: 10px 10px 10px 18px; box-shadow: var(--shadow); display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 10px; }
-  #order::after { content: ''; position: absolute; left: 34px; top: -9px; border: 10px solid transparent; border-top: 0; border-bottom-color: var(--card); }
-  #order .head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+  #order { flex: none; background: var(--card); border-radius: 22px; padding: 10px 10px 10px 16px; box-shadow: var(--shadow); display: grid; row-gap: 4px; }
+  #order .head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
   #to { font: 14px var(--display); color: var(--teal-deep); }
   #approve-mode { display: flex; background: #f3ede4; border-radius: 12px; padding: 3px; gap: 2px; }
   #approve-mode button { display: flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9px; color: var(--ink-soft); font: 13px var(--display); white-space: nowrap; }
   #approve-mode button svg { width: 15px; height: 15px; }
   #approve-mode button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(74,58,46,.18); }
   #approve-mode button[data-auto="1"][aria-pressed="true"] { background: var(--butter); color: #5a3b00; }
-  #task { font: 15px/1.45 var(--body); color: var(--ink); border: 0; outline: 0; resize: none; background: none; padding: 4px 0; height: 46px; }
+  #task { font: 15px/1.45 var(--body); color: var(--ink); border: 0; outline: 0; resize: none; background: none; padding: 4px 0; height: 66px; }
   #task::placeholder { color: #a8968a; }
-  #order .acts { display: flex; gap: 6px; }
+  #order .acts { display: flex; gap: 6px; justify-self: end; }
   #go, #stop { display: flex; align-items: center; gap: 6px; border-radius: 16px; padding: 11px 18px; font: 16px var(--display); }
   #go { background: var(--leaf); color: #fff; }
   #stop { background: #f3ede4; }
   #order[data-mode="outside"] { display: none; }
-  #hint { position: fixed; left: calc(260px + (100vw - 606px) / 2); bottom: 22px; translate: -50% 0; background: rgba(255,255,255,.92); border-radius: 18px; padding: 9px 18px; box-shadow: var(--shadow); font: 15px var(--display); color: var(--ink-soft); white-space: nowrap; }
+  #hint { position: fixed; left: calc(260px + (100vw - 656px) / 2); bottom: 22px; translate: -50% 0; background: rgba(255,255,255,.92); border-radius: 18px; padding: 9px 18px; box-shadow: var(--shadow); font: 15px var(--display); color: var(--ink-soft); white-space: nowrap; }
   #order[data-mode="ready"] #stop { display: none; }
 
   /* ---------- empty ---------- */
@@ -199,7 +206,7 @@
   @media (prefers-reduced-motion: reduce) { #paper .sheet, #paper.leave .sheet, #paper.away .sheet { animation: none; } #paper.stamped .stamp { animation: none; opacity: .9; } }
 
   /* ---------- toasts ---------- */
-  #toasts { position: fixed; top: 96px; left: calc(260px + (100vw - 606px) / 2); translate: -50% 0; width: min(440px, calc(100vw - 650px)); display: flex; flex-direction: column; gap: 10px; z-index: 5; }
+  #toasts { position: fixed; top: 96px; left: calc(260px + (100vw - 656px) / 2); translate: -50% 0; width: min(440px, calc(100vw - 700px)); display: flex; flex-direction: column; gap: 10px; z-index: 5; }
   .toast { display: flex; gap: 14px; align-items: flex-start; background: var(--card); border-radius: 22px; padding: 14px 16px; box-shadow: var(--shadow); animation: drop .45s cubic-bezier(.2,1.4,.4,1); transition: opacity .25s, translate .25s; }
   .toast.bye { opacity: 0; translate: 0 -12px; }
   @keyframes drop { from { translate: 0 -24px; opacity: 0; } }
@@ -452,6 +459,7 @@
 
 <div id="plaque" hidden>
   <div><span id="plaque-name"></span><span id="plaque-path"></span></div>
+  <button id="arrange-drop" class="plaque-btn" data-icon="trash" hidden>빼기</button>
   <button id="arrange-reset" class="plaque-btn" data-icon="refresh" hidden>처음대로</button>
   <button id="arrange" class="plaque-btn" data-icon="tool" aria-pressed="false">배치 바꾸기</button>
   <button id="leave" data-icon="out">건물 밖으로</button>
@@ -460,24 +468,23 @@
 <aside id="side">
   <div id="asks" aria-live="polite"></div>
   <section id="journal"><header><h2 id="journal-title">건물 전체 일지</h2><button id="talks-btn" data-icon="read" hidden>지난 대화</button></header><ul id="talks" hidden></ul><ol></ol></section>
-</aside>
-
-<form id="order" data-mode="outside">
-  <div class="head">
-    <label id="to" for="task"></label>
-    <button type="button" id="use-skill" data-icon="spark">스킬 불러오기</button>
-    <div id="approve-mode" role="group" aria-label="이 층의 승인 방식">
-      <button type="button" data-auto="0" data-icon="hand" title="파일 수정·명령 실행 전에 매번 물어봐요">직접 승인</button>
-      <button type="button" data-auto="1" data-icon="bolt" title="묻지 않고 바로 허락해요">자동 승인</button>
+  <form id="order" data-mode="outside">
+    <div class="head">
+      <label id="to" for="task"></label>
+      <button type="button" id="use-skill" data-icon="spark">스킬 불러오기</button>
+      <div id="approve-mode" role="group" aria-label="이 층의 승인 방식">
+        <button type="button" data-auto="0" data-icon="hand" title="파일 수정·명령 실행 전에 매번 물어봐요">직접 승인</button>
+        <button type="button" data-auto="1" data-icon="bolt" title="묻지 않고 바로 허락해요">자동 승인</button>
+      </div>
     </div>
-  </div>
-  <div id="picked" hidden></div>
-  <textarea id="task" rows="2" autocomplete="off"></textarea>
-  <div class="acts">
-    <button id="stop" type="button" data-icon="stop">멈추기</button>
-    <button id="go" data-icon="send">맡기기</button>
-  </div>
-</form>
+    <div id="picked" hidden></div>
+    <textarea id="task" rows="2" autocomplete="off"></textarea>
+    <div class="acts">
+      <button id="stop" type="button" data-icon="stop">멈추기</button>
+      <button id="go" data-icon="send">맡기기</button>
+    </div>
+  </form>
+</aside>
 
 <aside id="bag" hidden aria-label="스킬 가방">
   <header><h2 id="bag-title">스킬 가방</h2><button id="bag-close" class="icon-btn" aria-label="닫기"></button></header>

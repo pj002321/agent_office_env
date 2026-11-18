@@ -27,7 +27,7 @@ controls.maxDistance = 70;          // frameOutside widens this as floors stack 
 controls.minPolarAngle = 0.35;
 controls.maxPolarAngle = 1.35;
 // keep the building centered in the space between the left elevator panel and the right column
-const PANEL_L = 260, PANEL_R = 346;
+const PANEL_L = 260, PANEL_R = 396;
 function fit() {
   camera.aspect = innerWidth / innerHeight;
   camera.setViewOffset(innerWidth, innerHeight, (PANEL_R - PANEL_L) / 2, 0, innerWidth, innerHeight);
@@ -246,7 +246,7 @@ function tree(x, z, s = 1, tint = 0x7cc58a, parent = island) {
   parent.add(g);
   sway.push(g);
 }
-[[-12, 2, 1.2], [-15, 9, 1], [12.5, 3, 1.15], [15, 10, 0.95, 0x9ad08f], [-9, 15, 0.85, 0x9ad08f], [9.5, 15.5, 0.9],
+[[-14.5, 1.5, 1.2], [-15, 9, 1], [14.8, 2.5, 1.15], [15, 10, 0.95, 0x9ad08f], [-9, 15, 0.85, 0x9ad08f], [9.5, 15.5, 0.9],
  [-17, -4, 1.1, 0x6fbf86], [17, -5, 1.05, 0x6fbf86]].forEach(t => tree(...t));
 const FLOWER = [0xffffff, 0xffd45e, 0xff9fb2, 0xc9b3f5];
 for (let i = 0; i < 70; i++) {
@@ -300,10 +300,11 @@ for (let i = 0; i < 7; i++) {
 }
 
 // ---------- building ----------
-export const FW = 14, FD = 9, FH = 3.4;
+export const FW = 24, FD = 9, FH = 3.4;   // wide floor: back row (대표·팀장) + corridor, then team rooms and a lounge in front
+const WIN = [-9.8, -5.4, -1.6, 1.6, 5.6, 9.8];   // facade windows
 const LOBBY = FH;
 const LANE = -1.4;
-const ELEV = V(-6.4, LANE);
+const ELEV = V(-FW / 2 + 0.6, LANE);
 const THEMES = [
   { wall: '#bfe9d6', dot: '#a6dcc4', face: 0x8fd3b6, rug: 0xfff0b8 },
   { wall: '#ffe9ad', dot: '#ffdc86', face: 0xffcf6b, rug: 0xcfe8ff },
@@ -467,7 +468,7 @@ const FURN = {
     add(o, rbox(0.2, 0.5, 0.05, 0.02), 0xfff3dc, 0.33, 1.3, 0.35);   // buttons
     add(o, rbox(0.62, 0.18, 0.05, 0.02), 0x5a4636, -0.12, 0.35, 0.35);   // slot
   } },
-  lights: { at: [0, -FD / 2 + 0.14, 0], build(o, preview) {   // garland: scallops hooked every 1.6 so a hook sits right above the clock at x 1.6
+  lights: { at: [0, -FD / 2 + 0.14, 0], move: 'wall', build(o, preview) {   // garland: scallops hooked every 1.6 so a hook sits right above the clock at x 1.6
     const pts = [], n = preview ? 16 : 64;   // the shop thumbnail shows two scallops, not the whole wall
     for (let i = 0; i <= n; i++) { const x = -6.4 + i * 0.2; pts.push(new THREE.Vector3(x, 3 - 0.18 * Math.abs(Math.sin(Math.PI * (x + 6.4) / 1.6)), 0)); }
     o.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: INK })));
@@ -482,11 +483,11 @@ const FURN = {
     }
     add(o, sphere(0.1, 10, 8), 0xff9fb2, 0, 1.38, 0, { shadow: false });
   } },
-  tv: { at: [5.6, -FD / 2 + 0.12, 0], build(o) {
+  tv: { at: [5.6, -FD / 2 + 0.12, 0], move: 'wall', build(o) {
     add(o, rbox(1.5, 0.9, 0.08, 0.04), 0x2b2b38, 0, 2.15, 0);
     add(o, new THREE.PlaneGeometry(1.36, 0.76), hueMat, 0, 2.15, 0.05, { shadow: false });
   } },
-  'ceo-sign': { at: [-4.6, -FD / 2 + 0.12, 0], build(o) {
+  'ceo-sign': { at: [-4.6, -FD / 2 + 0.12, 0], move: 'wall', build(o) {
     add(o, new THREE.PlaneGeometry(1.9, 0.6), new THREE.MeshBasicMaterial({ map: glowText('CEO ★', '#47e8ff', '#1d1b3f') }), 0, 2.25, 0.02, { shadow: false });
   } },
   jukebox: { at: [-6.25, -3.75, Math.PI / 4], move: true, build(o) {
@@ -496,7 +497,7 @@ const FURN = {
     add(o, rbox(0.62, 0.34, 0.05, 0.03), 0x3a2a22, 0, 0.42, 0.3);
     for (let k = 0; k < 4; k++) add(o, new THREE.BoxGeometry(0.5, 0.02, 0.02), 0xc9a26a, 0, 0.32 + k * 0.07, 0.33, { shadow: false });
   } },
-  fireplace: { at: [FW / 2 - 0.35, -2.4, -Math.PI / 2], build(o) {
+  fireplace: { at: [FW / 2 - 0.35, -2.4, -Math.PI / 2], move: true, build(o) {
     add(o, rbox(1.9, 1.3, 0.5, 0.06), 0xd9c3a0, 0, 0.65, 0, { outline: 0.03 });
     add(o, rbox(2.1, 0.12, 0.62, 0.04), 0xb5835a, 0, 1.36, 0.02);
     add(o, rbox(1.0, 0.75, 0.1, 0.04), 0x3a2a22, 0, 0.48, 0.21);
@@ -504,7 +505,7 @@ const FURN = {
     for (let k = 0; k < 3; k++) add(o, new THREE.ConeGeometry(0.12 - k * 0.02, 0.45 - k * 0.08, 8), flameMat, -0.18 + k * 0.18, 0.45, 0.3, { shadow: false });
     add(o, rbox(0.3, 0.38, 0.08, 0.03), 0xfff3dc, 0.6, 1.62, 0.05);   // photo frame on the mantel
   } },
-  disco: { at: [2.8, 1.2, 0], build(o) {
+  disco: { at: [2.8, 1.2, 0], move: true, build(o) {   // hangs from the ceiling; dragged by its floor spot
     add(o, new THREE.CylinderGeometry(0.02, 0.02, 0.45, 6), 0x8a8a9a, 0, RH - 0.22, 0, { shadow: false });
     const ball = add(o, new THREE.IcosahedronGeometry(0.36, 1), new THREE.MeshPhongMaterial({ color: 0xdfe6f0, flatShading: true, shininess: 150, specular: 0xffffff }), 0, RH - 0.62, 0, { shadow: false });
     const spots = new THREE.Group(); o.add(spots);
@@ -515,7 +516,7 @@ const FURN = {
     spots.userData.noThumb = true;
     spin(o, t => { ball.rotation.y = t * 0.9; spots.rotation.y = -t * 0.5; });
   } },
-  chandelier: { at: [-2.8, 1.2, 0], build(o) {
+  chandelier: { at: [-2.8, 1.2, 0], move: true, build(o) {
     add(o, new THREE.CylinderGeometry(0.03, 0.03, 0.5, 6), 0xc9a24a, 0, RH - 0.25, 0, { shadow: false });
     add(o, new THREE.TorusGeometry(0.55, 0.05, 8, 32).rotateX(Math.PI / 2), goldMat, 0, RH - 0.55, 0, { shadow: false });
     add(o, sphere(0.14), goldMat, 0, RH - 0.55, 0, { shadow: false });
@@ -586,7 +587,7 @@ function block(parent, x, z, w, d, h, color, roofColor = 0xfff3dc) {
   add(parent, rbox(w + 0.3, 0.3, d + 0.3, 0.08), roofColor, x, h + 0.15, z);
 }
 // Lv.3: more street lamps
-{ const g = stage(3); for (const [x, z] of [[-3.6, 13.5], [3.6, 13.5], [-8.5, 7], [8.5, 7], [-10, -2.5], [10, -2.5]]) lamp(x, z, g); }
+{ const g = stage(3); for (const [x, z] of [[-3.6, 13.5], [3.6, 13.5], [-8.5, 7], [8.5, 7], [-14, -2.5], [14, -2.5]]) lamp(x, z, g); }
 // Lv.5: neighbours — a bakery and a little shop behind the office
 { const g = stage(5);
   block(g, -10.5, -10, 4, 4, 4.4, 0xffd8c6, 0xff8f7a);
@@ -654,7 +655,7 @@ function miniBuilding(id) {
     const y = LOBBY + i * FH;
     add(g, rbox(FW + 0.6, 0.3, FD + 0.6, 0.1), 0xffffff, 0, y - 0.15, 0);
     add(g, new THREE.BoxGeometry(FW, FH - 0.3, FD), face, 0, y + (FH - 0.3) / 2, 0);
-    for (const x of [-4.8, -1.6, 1.6, 4.8]) add(g, new THREE.PlaneGeometry(2.3, 1.55), glass, x, y + 1.62, FD / 2 + 0.01, { shadow: false });
+    for (const x of WIN) add(g, new THREE.PlaneGeometry(2.3, 1.55), glass, x, y + 1.62, FD / 2 + 0.01, { shadow: false });
     if (STRIP[id]) for (const sx of [-1, 1]) add(g, new THREE.BoxGeometry(0.09, FH, 0.09), new THREE.MeshBasicMaterial({ color: STRIP[id] }), sx * (FW / 2 + 0.32), y + FH / 2 - 0.15, FD / 2 + 0.32, { shadow: false });
   }
   const top = LOBBY + 2 * FH - 0.3;
@@ -714,6 +715,14 @@ export function thumb(it) {
   return url;
 }
 
+// team offices on every floor: a carpet over some staff desks; hires sit by their subagent role (subagent_type)
+// rooms open onto the corridor (LANE); everyone walks the corridor, then straight in, so partitions never block a path
+const TEAMS = [
+  { key: 'plan', name: '기획팀', color: 0xffe9a8, x: [-FW / 2, -7.6], desks: [0, 1], match: /plan|explor|research|기획/i },
+  { key: 'design', name: '디자인팀', color: 0xffd1dc, x: [-7.6, -3.2], desks: [2, 3], match: /design|ui|ux|디자인/i },
+  { key: 'dev', name: '개발팀', color: 0xcfe6ff, x: [3.2, FW / 2], desks: [4, 5, 6, 7], match: /./ },   // everything else
+];
+const ROOM_FRONT = LANE + 0.95;   // where the rooms start; the lounge sits between 디자인팀 and 개발팀
 // desks, sofas and computers each come in shop styles; every floor owns its materials so it can be restyled alone
 const DESK = {
   'desk-wood': { top: 0xe2b07e, leg: 0xc99566, stool: 0xff9f8a },
@@ -783,7 +792,7 @@ const BUILT = {
     add(o, new THREE.CylinderGeometry(0.04, 0.05, 1.7, 8), 0x8a6a52, 0, 0.85, 0);
     add(o, new THREE.CylinderGeometry(0.22, 0.34, 0.36, 16, 1, true), 0xfff3dc, 0, 1.82, 0);
   },
-  rug: (o, mat = toon(THEMES[0].rug)) => add(o, new THREE.CylinderGeometry(3.6, 3.6, 0.02, 40).scale(1.5, 1, 0.75), mat, 0, 0.04, 0, { shadow: false }),
+  rug: (o, mat = toon(THEMES[0].rug)) => add(o, new THREE.CylinderGeometry(3.6, 3.6, 0.02, 40).scale(0.8, 1, 0.7), mat, 0, 0.04, 0, { shadow: false }),
   clock: o => {
     add(o, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 28).rotateX(Math.PI / 2), 0xffffff, 0, 0, 0, { outline: 0.06 });
     add(o, rbox(0.05, 0.3, 0.03, 0.01), 0x5a4636, 0, 0.12, 0.05, { shadow: false });
@@ -834,8 +843,7 @@ function makeFloor(info, index) {
 
   // decor
   const rugMat = ownToon(th.rug);
-  const builtins = { clock: new THREE.Group(), plants: [] };   // 기본 가구: 대표 can take these out
-  g.add(builtins.clock);
+  const builtins = { plants: [] };   // 기본 가구: 대표 can take these out
   // decor 대표 can move in 배치 mode: each piece is one group at floor level, keyed for the saved layout
   const movables = {};
   const movable = (key, x, z, ry = 0) => {
@@ -852,10 +860,12 @@ function makeFloor(info, index) {
   builtins.lounge.add(loungeIn);
   const shelf = movable('shelf', -1.4, -FD / 2 + 0.35);                                            // bookshelf
   BUILT.shelf(shelf);
-  const clockFace = add(builtins.clock, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 28).rotateX(Math.PI / 2), 0xffffff, 1.6, 2.4, -FD / 2 + 0.13, { outline: 0.06 });   // clock
+  builtins.clock = movable('clock', 1.6, -FD / 2 + 0.13);
+  builtins.clock.userData.wall = true;
+  const clockFace = add(builtins.clock, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 28).rotateX(Math.PI / 2), 0xffffff, 0, 2.4, 0, { outline: 0.06 });   // clock
   const hand = len => {   // pivots at the clock center; rotation.z is set from the OS clock
     const pivot = new THREE.Group();
-    pivot.position.set(1.6, 2.4, -FD / 2 + 0.18);
+    pivot.position.set(0, 2.4, 0.05);
     add(pivot, rbox(0.05, len, 0.03, 0.01), 0x5a4636, 0, len / 2 - 0.03, 0, { shadow: false });
     builtins.clock.add(pivot);
     return pivot;
@@ -863,7 +873,7 @@ function makeFloor(info, index) {
   const clockHands = { h: hand(0.2), m: hand(0.3) };
   const coffee = movable('coffee', 5.6, -FD / 2 + 0.4);                                            // coffee counter
   BUILT.coffee(coffee);
-  [[-6.3, 3.9], [6.3, 3.9], [6.4, -0.6]].forEach(([x, z], i) => {
+  [[-FW / 2 + 0.7, 3.9], [FW / 2 - 0.7, 3.9], [FW / 2 - 0.6, -2.2]].forEach(([x, z], i) => {
     const p = movable(`plant${i}`, x, z);
     builtins.plants.push(p);
     BUILT.plants(p);
@@ -879,12 +889,28 @@ function makeFloor(info, index) {
   };
   const ceoDesk = desk('desk-ceo', -4.6, -3.2, [1.1, -0.8]);
   const leadDesk = desk('desk-lead', 1.6, -3.2, [1.1, -0.8]);
-  const staffDesks = [-5, -2.5, 0, 2.5, 5].map((x, i) => desk(`desk${i}`, x, 0.7));
+  const staffDesks = [-10.9, -9.2, -6.25, -4.55, 4.6, 6.6, 8.6, 10.6].map((x, i) => desk(`desk-team${i}`, x, 0.7));   // new keys: layouts saved for the old 5-desk row would land in the lounge
+  // ponytail: rooms are fixed; a desk 대표 drags into another room still belongs to its team
+  const roomD = FD / 2 - ROOM_FRONT, roomZ = ROOM_FRONT + roomD / 2;
+  for (const x of [-7.6, -3.2, 3.2]) {   // partitions, kept below the ceiling so the camera sees over them
+    add(g, new THREE.BoxGeometry(0.16, 2.2, roomD), paper, x, 1.1, roomZ);
+    add(g, rbox(0.24, 0.1, roomD, 0.04), trim, x, 2.25, roomZ);
+  }
+  const teams = TEAMS.map(t => {
+    const cx = (t.x[0] + t.x[1]) / 2;
+    add(g, rbox(t.x[1] - t.x[0] - 0.2, 0.03, roomD - 0.1, 0.12), toon(t.color), cx, 0.05, roomZ, { shadow: false }).receiveShadow = true;
+    const el = document.createElement('div');
+    el.className = 'team-sign';
+    const obj = new CSS2DObject(el);
+    obj.position.set(cx, 0.1, FD / 2 - 0.45);   // name plate on the room's front edge, clear of heads and speech bubbles
+    g.add(obj);
+    return { ...t, el, obj, desks: t.desks.map(i => staffDesks[i]) };
+  });
 
   // lounge in front: sofa, armchairs, round table, lamp
   const sm = { main: ownToon(SOFA['sofa-coral'].main), arm: ownToon(SOFA['sofa-coral'].arm), chair: ownToon(SOFA['sofa-coral'].chair) };
   BUILT.lounge(loungeIn, sm);
-  const lampO = movable('lamp', -4.4, 3.6);
+  const lampO = movable('lamp', -2.7, 4.0);
   BUILT.lamp(lampO);
 
   // facade: hinged on its left edge so it can swing open
@@ -895,7 +921,7 @@ function makeFloor(info, index) {
   fg.position.x = FW / 2 + 0.1;
   hinge.add(fg);
   const glass = new THREE.MeshBasicMaterial({ color: 0xcfefff, transparent: true, opacity: 0.42, depthWrite: false });
-  const WIN = [-4.8, -1.6, 1.6, 4.8], WW = 2.3, WY0 = 0.85, WH = 1.55;
+  const WW = 2.3, WY0 = 0.85, WH = 1.55;
   add(fg, new THREE.BoxGeometry(FW + 0.2, WY0, 0.2), face, 0, WY0 / 2, 0);
   add(fg, new THREE.BoxGeometry(FW + 0.2, H - WY0 - WH, 0.2), face, 0, WY0 + WH + (H - WY0 - WH) / 2, 0);
   const edges = [-FW / 2 - 0.1, ...WIN.flatMap(x => [x - WW / 2, x + WW / 2]), FW / 2 + 0.1];
@@ -934,7 +960,7 @@ function makeFloor(info, index) {
   const ceiling = new THREE.PointLight(0xffd6a0, 0, 18, 1);   // room lights, switched on at night
   ceiling.position.set(0, H - 0.2, 0.5);
   g.add(ceiling);
-  const f = { id: info.id, info, g, hinge, glass, clockHands, ceiling, doorL, doorR, ceoDesk, leadDesk, staffDesks, signEl, signObj, alertObj,
+  const f = { id: info.id, info, g, hinge, glass, clockHands, ceiling, doorL, doorR, ceoDesk, leadDesk, staffDesks, teams, signEl, signObj, alertObj,
               agents: new Map(), live: new Set(), asks: new Map(), busy: false, lift: 0, open: 0, base: 0, made: 0,
               crew: new Set(), spots: makeSpots(), clockFace, lifeT: 6 + Math.random() * 8,
               th, paperTex, paperMat: paper, faceMat: face, floorMat: ground, furn: makeFurniture(g), strips, dm, sm, sets, rugMat,
@@ -942,6 +968,7 @@ function makeFloor(info, index) {
   for (const k of Object.keys(FURN).filter(k => FURN[k].move)) {   // floor-standing shop furniture moves too
     const o = movables[k] = f.furn[k];
     o.userData.home = [o.position.x, o.position.z, o.rotation.y];
+    o.userData.wall = FURN[k].move === 'wall';
   }
   f.movables = movables;
   f.desks = [ceoDesk, leadDesk, ...staffDesks];
@@ -1284,6 +1311,10 @@ const moon = add(scene, sphere(4, 28, 20), new THREE.MeshBasicMaterial({ color: 
 let hourOverride = null, lastSky = -1;
 export const debugHour = h => { hourOverride = h; lastSky = -1; };   // testing hook: force a time of day
 export const debugCam = () => ({ camera, controls });   // testing hook: site/promo clips steer the camera
+export const debugMovable = k => floors.get(current)?.movables[k];   // testing hooks: 배치 mode checks
+export const debugInside = () => { const f = floors.get(current); const o = f.g.getWorldPosition(new THREE.Vector3());
+  return Object.entries(f.movables).filter(([, m]) => m.visible).every(([, m]) => { box.setFromObject(m);
+    return box.min.x - o.x > -FW / 2 - 0.01 && box.max.x - o.x < FW / 2 + 0.01 && box.min.z - o.z > -FD / 2 - 0.01 && box.max.z - o.z < FD / 2 + 0.01; }); };
 export const debugVisit = kind => { const f = floors.get(current); if (f) ({ critter, delivery, ghost, guest: g => { g.lifeT = 0; } })[kind]?.(f); };   // testing hook: force a drop-in
 const mixHex = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t);
 function tickSky() {
@@ -1349,11 +1380,14 @@ export function handle(e) {
       const sp = SPECIES_ORDER[(f.made + 2) % SPECIES_ORDER.length];
       const s = villager(f, STAFF_NAMES[f.made++ % STAFF_NAMES.length], f.made % 3 ? '사원' : '대리', sp, ELEV.clone());
       s.g.rotation.y = Math.PI / 2;
-      // ponytail: 5 desks per floor; extra staff share the last desk — grow the floor plan when swarms get big
-      s.desk = f.staffDesks.find(d => !d.owner) || f.staffDesks.at(-1);
+      const t = f.teams.find(t => t.match.test(e.role || 'agent'));
+      s.team = t.key;
+      // ponytail: 5 desks per floor; a full team borrows any free desk, then shares its last one — grow the floor plan when swarms get big
+      s.desk = t.desks.find(d => !d.owner) || f.staffDesks.find(d => !d.owner) || t.desks.at(-1);
       s.desk.owner = s;
       f.agents.set(e.agent, s);
       f.crew.add(s);
+      refreshSign(f);
       act(s, async () => {
         await elevator(f, true);
         await go(s, deskFront(lead.desk, -0.9 + (f.made % 3) * 0.9)); face(s, lead);
@@ -1362,7 +1396,7 @@ export function handle(e) {
         await sleep(900);
         await toDesk(s);
       });
-      return { who: s, text: `출근 · ${e.text}`, tone: 'hire' };
+      return { who: s, text: `${t.name} 출근 · ${e.text}`, tone: 'hire' };
     }
     case 'leave':
       if (!a) return null;
@@ -1436,6 +1470,7 @@ export function handle(e) {
         });
       });
       act(lead, async () => { lead.typing = false; lead.doing.textContent = ''; });
+      refreshSign(f);
       return e.code ? { who: lead, text: `작업이 멈췄어요 (코드 ${e.code}) ${e.text || ''}`, tone: 'no' } : null;
   }
   return null;
@@ -1464,6 +1499,12 @@ function refreshSign(f) {
   const st = f.signEl.querySelector('.st');
   st.textContent = f.asks.size ? '승인 대기' : f.busy ? '작업 중' : '쉬는 중';
   st.dataset.state = f.asks.size ? 'ask' : f.busy ? 'busy' : 'idle';
+  for (const t of f.teams) {
+    const n = [...f.crew].filter(s => s.team === t.key).length;
+    const ask = [...f.asks.values()].some(w => w.team === t.key);
+    t.el.dataset.state = ask ? 'ask' : n ? 'busy' : 'idle';
+    t.el.textContent = `${t.name} · ${ask ? '승인 대기' : n ? `${n}명 일하는 중` : '비어 있음'}`;
+  }
 }
 export const floorState = id => {
   const f = floors.get(id);
@@ -1509,6 +1550,7 @@ function layout() {
     f.hinge.visible = f.open < 0.98;
     const inside = current === f.id;
     for (const a of f.live) a.label.visible = inside;
+    for (const t of f.teams) t.obj.visible = inside;
     f.signObj.visible = !current;
     f.alertObj.visible = f.asks.size > 0 && !inside;
   }
@@ -1518,9 +1560,11 @@ function layout() {
 let roofLift = 0;
 
 const ROOF_TALL = { neon: 3, crystal: 4, gold: 5, sky: 8 };   // rooftops that rise above the usual framing
+// camera distance at which a half-width w fits between the side panels
+const fitDist = w => w / (Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.aspect * Math.max(0.3, (innerWidth - PANEL_L - PANEL_R) / innerWidth));
 function frameOutside(ms) {
   const h = roofBase + 3.5 + (ROOF_TALL[look.building] || 0);
-  const dist = Math.max(h * 1.9, 36);
+  const dist = Math.max(h * 1.9, fitDist(FW / 2 + 8));   // + the floor signs hanging off the right side
   const target = new THREE.Vector3(0, h * 0.45, 0);
   controls.maxDistance = dist * 1.4;   // zoom out a bit past the framing, never off into the void
   return fly(target.clone().add(new THREE.Vector3(0.42, 0.32, 1).normalize().multiplyScalar(dist)), target, ms);
@@ -1548,7 +1592,8 @@ export async function enter(id) {
   const r0 = roofLift, r1 = id ? 14 : 0;
   if (id) {
     const f = floors.get(id);
-    fly(new THREE.Vector3(0, f.base + 14, 14.5), new THREE.Vector3(0, f.base, 0.2), 1100);
+    const d = fitDist(FW / 2 + 0.6) * 0.93;   // the front edge sits nearer the camera than the middle
+    fly(new THREE.Vector3(0, f.base + d * 0.7, 0.6 + d * 0.7), new THREE.Vector3(0, f.base, 0.6), 1100);
   } else frameOutside(1100);
   if (prev && floors.has(prev)) floors.get(prev).alertObj.visible = floors.get(prev).asks.size > 0;
   await tween(1000, t => {
@@ -1607,6 +1652,7 @@ function applyLayout(f) {
   for (const [k, o] of Object.entries(f.movables)) {
     const [x, z, r] = saved[k] || o.userData.home;
     o.position.set(x, 0, z); o.rotation.y = r;
+    if (o.visible) keepInside(f, o);
   }
   if (f.desks) syncSeats(f);
 }
@@ -1622,7 +1668,7 @@ ring.visible = false;
 scene.add(ring);
 export function setEditing(on) {
   editing = on && current ? floors.get(current) : null;
-  held = picked = null; ring.visible = false;
+  held = picked = null; ring.visible = false; onPick(null);
   renderer.domElement.style.cursor = '';
   return !!editing;
 }
@@ -1634,7 +1680,7 @@ export function resetLayout() {
   if (!editing) return;
   editing.info = { ...editing.info, layout: {} };
   applyLayout(editing);
-  picked = null; ring.visible = false;
+  picked = null; ring.visible = false; onPick(null);
   onLayout(editing.id, {});
 }
 function pickAt(e) {   // → the movable under the pointer, or null
@@ -1648,19 +1694,38 @@ function groundAt(e) {
   ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
   return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -editing.g.position.y), new THREE.Vector3());
 }
+const INNER_X = FW / 2 - 0.12, INNER_Z = FD / 2 - 0.12;
+const box = new THREE.Box3();
+function keepInside(f, o) {
+  o.updateWorldMatrix(true, true);
+  box.setFromObject(o);
+  const ox = f.g.getWorldPosition(new THREE.Vector3());
+  const fit = (lo, hi, lim) => hi - lo >= 2 * lim ? -(lo + hi) / 2 : Math.max(-lim - lo, 0) + Math.min(lim - hi, 0);
+  o.position.x += fit(box.min.x - ox.x, box.max.x - ox.x, INNER_X);
+  o.position.z += fit(box.min.z - ox.z, box.max.z - ox.z, INNER_Z);
+}
 function rotatePicked(by) {
-  if (!picked) return;
+  if (!picked || picked.userData.wall) return;
   picked.rotation.y = turn(picked.rotation.y + by);
+  keepInside(editing, picked);
   syncSeats(editing);
   saveLayout();
+  onPick(pickedKey());
+}
+const pickedKey = () => picked && Object.keys(editing.movables).find(k => editing.movables[k] === picked);
+let onPick = () => {};
+export const onPickChange = cb => onPick = cb;   // 배치 mode: the selected piece's key (or null), for the 빼기 button
+export function dropPicked() {   // the piece was taken out of the room: clear the selection
+  picked = null; ring.visible = false; onPick(null);
 }
 const showRing = () => { if (picked) ring.position.set(picked.position.x, editing.g.position.y + 0.06, picked.position.z); ring.visible = !!picked; };
 // capture: these run before OrbitControls, so grabbing a piece doesn't also orbit the camera
 renderer.domElement.addEventListener('pointerdown', e => {
   if (!editing || e.button !== 0) return;
   const o = pickAt(e), p = o && groundAt(e);
-  if (!o || !p) return;
+  if (!o || !p) { if (picked) { picked = null; ring.visible = false; onPick(null); } return; }   // empty floor: done with that piece
   picked = o;
+  onPick(pickedKey());
   held = { dx: p.x - o.position.x, dz: p.z - o.position.z };
   controls.enabled = false;
   o.position.y = 0.12;
@@ -1673,7 +1738,8 @@ renderer.domElement.addEventListener('pointermove', e => {
   const p = groundAt(e);
   if (!p) return;
   picked.position.x = THREE.MathUtils.clamp(snap(p.x - held.dx), -ROOM_X, ROOM_X);
-  picked.position.z = THREE.MathUtils.clamp(snap(p.z - held.dz), -ROOM_Z, ROOM_Z);
+  if (!picked.userData.wall) picked.position.z = THREE.MathUtils.clamp(snap(p.z - held.dz), -ROOM_Z, ROOM_Z);   // wall pieces slide along the wall
+  keepInside(editing, picked);
   syncSeats(editing);
   showRing();
 }, { capture: true });
@@ -1687,10 +1753,10 @@ addEventListener('pointerup', () => {
 });
 renderer.domElement.addEventListener('wheel', e => {   // wheel over a piece turns it instead of zooming
   if (!editing) return;
-  const o = pickAt(e);
+  const o = picked || pickAt(e);   // the selected piece keeps the wheel until you click empty floor
   if (!o) return;
   e.preventDefault(); e.stopImmediatePropagation();
-  picked = o;
+  if (o !== picked) { picked = o; onPick(pickedKey()); }
   rotatePicked(Math.sign(e.deltaY) * Math.PI / 4);
   showRing();
 }, { capture: true, passive: false });

@@ -43,7 +43,10 @@ function parse(m, subs) {
       if (b.type === 'tool_result' && subs.delete(b.tool_use_id)) out.push({ agent: b.tool_use_id, kind: 'leave' });
     }
   }
-  if (m.type === 'result') out.push({ agent: 'lead', kind: 'done', ok: !m.is_error, text: oneLine(m.result, 4000) });
+  if (m.type === 'result') {   // the final answer is read in the chat panel, so keep its line breaks
+    const t = String(m.result || '').trim();
+    out.push({ agent: 'lead', kind: 'done', ok: !m.is_error, text: t.length > 4000 ? t.slice(0, 3999) + '…' : t });
+  }
   return out;
 }
 

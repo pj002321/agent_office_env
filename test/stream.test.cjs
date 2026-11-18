@@ -25,3 +25,8 @@ test('lead work, subagent hire → work → leave, done', () => {
   ]);
   assert.strictEqual(subs.size, 0);
 });
+
+test('final answer keeps its line breaks for the chat panel', () => {
+  const [e] = parse({ type: 'result', is_error: false, result: '  고쳤어요.\n\n- a.js\n- b.js  ' }, new Set());
+  assert.strictEqual(e.text, '고쳤어요.\n\n- a.js\n- b.js');
+});
