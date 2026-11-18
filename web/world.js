@@ -715,14 +715,17 @@ export function thumb(it) {
   return url;
 }
 
-// team offices on every floor: a carpet over some staff desks; hires sit by their subagent role (subagent_type)
-// rooms open onto the corridor (LANE); everyone walks the corridor, then straight in, so partitions never block a path
-const TEAMS = [
-  { key: 'plan', name: '기획팀', color: 0xffe9a8, x: [-FW / 2, -7.6], desks: [0, 1], match: /plan|explor|research|기획/i },
-  { key: 'design', name: '디자인팀', color: 0xffd1dc, x: [-7.6, -3.2], desks: [2, 3], match: /design|ui|ux|디자인/i },
-  { key: 'dev', name: '개발팀', color: 0xcfe6ff, x: [3.2, FW / 2], desks: [4, 5, 6, 7], match: /./ },   // everything else
-];
-const ROOM_FRONT = LANE + 0.95;   // where the rooms start; the lounge sits between 디자인팀 and 개발팀
+// team rooms on every floor: 대표 puts up walls across the back and names the spaces between them.
+// A named space is a team room (carpet + name plate); an unnamed one stays open, like the lounge.
+// Rooms open onto the corridor (LANE); everyone walks the corridor, then straight in, so walls never block a path
+const ROOM_FRONT = LANE + 0.95;   // where the rooms start
+const ROOM_D = FD / 2 - ROOM_FRONT, ROOM_ZC = ROOM_FRONT + ROOM_D / 2;
+const DEFAULT_ROOMS = { walls: [-7.6, -3.2, 3.2], names: ['기획팀', '디자인팀', '', '개발팀'], agents: ['', '', '', ''] };
+const ROOM_COLORS = [0xffe9a8, 0xffd1dc, 0xcfe6ff, 0xd8f0c8, 0xe6d8ff, 0xffe0c2];
+const ROLE_HINTS = [[/기획/, /plan|explor|research|기획/i], [/디자인/, /design|ui|ux|디자인/i], [/개발/, /dev|code|engineer|build|개발/i]];
+const MIN_ROOM = 1.8, MAX_WALLS = 7;
+const wallGeo = new THREE.BoxGeometry(0.16, 2.2, ROOM_D), wallTopGeo = rbox(0.24, 0.1, ROOM_D, 0.04), carpetGeo = new THREE.BoxGeometry(1, 0.03, ROOM_D - 0.1);
+const roomsOf = info => { const r = info.rooms; return r && Array.isArray(r.walls) && Array.isArray(r.names) && r.names.length === r.walls.length + 1 ? r : DEFAULT_ROOMS; };
 // desks, sofas and computers each come in shop styles; every floor owns its materials so it can be restyled alone
 const DESK = {
   'desk-wood': { top: 0xe2b07e, leg: 0xc99566, stool: 0xff9f8a },
@@ -890,23 +893,6 @@ function makeFloor(info, index) {
   const ceoDesk = desk('desk-ceo', -4.6, -3.2, [1.1, -0.8]);
   const leadDesk = desk('desk-lead', 1.6, -3.2, [1.1, -0.8]);
   const staffDesks = [-10.9, -9.2, -6.25, -4.55, 4.6, 6.6, 8.6, 10.6].map((x, i) => desk(`desk-team${i}`, x, 0.7));   // new keys: layouts saved for the old 5-desk row would land in the lounge
-  // ponytail: rooms are fixed; a desk 대표 drags into another room still belongs to its team
-  const roomD = FD / 2 - ROOM_FRONT, roomZ = ROOM_FRONT + roomD / 2;
-  for (const x of [-7.6, -3.2, 3.2]) {   // partitions, kept below the ceiling so the camera sees over them
-    add(g, new THREE.BoxGeometry(0.16, 2.2, roomD), paper, x, 1.1, roomZ);
-    add(g, rbox(0.24, 0.1, roomD, 0.04), trim, x, 2.25, roomZ);
-  }
-  const teams = TEAMS.map(t => {
-    const cx = (t.x[0] + t.x[1]) / 2;
-    add(g, rbox(t.x[1] - t.x[0] - 0.2, 0.03, roomD - 0.1, 0.12), toon(t.color), cx, 0.05, roomZ, { shadow: false }).receiveShadow = true;
-    const el = document.createElement('div');
-    el.className = 'team-sign';
-    const obj = new CSS2DObject(el);
-    obj.position.set(cx, 0.1, FD / 2 - 0.45);   // name plate on the room's front edge, clear of heads and speech bubbles
-    g.add(obj);
-    return { ...t, el, obj, desks: t.desks.map(i => staffDesks[i]) };
-  });
-
   // lounge in front: sofa, armchairs, round table, lamp
   const sm = { main: ownToon(SOFA['sofa-coral'].main), arm: ownToon(SOFA['sofa-coral'].arm), chair: ownToon(SOFA['sofa-coral'].chair) };
   BUILT.lounge(loungeIn, sm);
@@ -960,10 +946,10 @@ function makeFloor(info, index) {
   const ceiling = new THREE.PointLight(0xffd6a0, 0, 18, 1);   // room lights, switched on at night
   ceiling.position.set(0, H - 0.2, 0.5);
   g.add(ceiling);
-  const f = { id: info.id, info, g, hinge, glass, clockHands, ceiling, doorL, doorR, ceoDesk, leadDesk, staffDesks, teams, signEl, signObj, alertObj,
+  const f = { id: info.id, info, g, hinge, glass, clockHands, ceiling, doorL, doorR, ceoDesk, leadDesk, staffDesks, signEl, signObj, alertObj,
               agents: new Map(), live: new Set(), asks: new Map(), busy: false, lift: 0, open: 0, base: 0, made: 0,
               crew: new Set(), spots: makeSpots(), clockFace, lifeT: 6 + Math.random() * 8,
-              th, paperTex, paperMat: paper, faceMat: face, floorMat: ground, furn: makeFurniture(g), strips, dm, sm, sets, rugMat,
+              th, paperTex, paperMat: paper, trimMat: trim, faceMat: face, floorMat: ground, furn: makeFurniture(g), strips, dm, sm, sets, rugMat,
               builtins: { ...builtins, shelf, lamp: lampO, coffee } };
   for (const k of Object.keys(FURN).filter(k => FURN[k].move)) {   // floor-standing shop furniture moves too
     const o = movables[k] = f.furn[k];
@@ -972,6 +958,7 @@ function makeFloor(info, index) {
   }
   f.movables = movables;
   f.desks = [ceoDesk, leadDesk, ...staffDesks];
+  buildRooms(f);
   applyLook(f);
   applyLayout(f);
   f.me = villager(f, '나', '대표', 'cat', ceoDesk.seat);
@@ -1272,7 +1259,7 @@ function poke(f) {
 const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown', 'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
 let konami = 0;
 addEventListener('keydown', e => {
-  if (e.target.closest?.('input, textarea')) return;
+  if (e.target.closest?.('input, textarea, select, #team')) return;
   const k = e.key.toLowerCase();
   konami = k === KONAMI[konami] ? konami + 1 : k === 'arrowup' ? (konami === 2 ? 2 : 1) : 0;
   if (konami < KONAMI.length) return;
@@ -1380,14 +1367,24 @@ export function handle(e) {
       const sp = SPECIES_ORDER[(f.made + 2) % SPECIES_ORDER.length];
       const s = villager(f, STAFF_NAMES[f.made++ % STAFF_NAMES.length], f.made % 3 ? '사원' : '대리', sp, ELEV.clone());
       s.g.rotation.y = Math.PI / 2;
-      const t = f.teams.find(t => t.match.test(e.role || 'agent'));
-      s.team = t.key;
-      // ponytail: 5 desks per floor; a full team borrows any free desk, then shares its last one — grow the floor plan when swarms get big
-      s.desk = t.desks.find(d => !d.owner) || f.staffDesks.find(d => !d.owner) || t.desks.at(-1);
+      // a room whose name fits the role, else any room with a free desk, else any free desk; the team is wherever the desk stands
+      // ponytail: 8 staff desks per floor, then the last one is shared — grow the floor plan when swarms get big
+      const role = (e.role || 'agent').toLowerCase();
+      const fits = t => { const n = t.name.replace(/\s*팀$/, '').toLowerCase(); return ROLE_HINTS.find(([h]) => h.test(t.name))?.[1].test(role) || (n.length > 1 && role.includes(n)); };   // "QA팀" takes qa-tester
+      const free = t => f.staffDesks.find(d => !d.owner && inRoom(t, d));
+      const own = f.teams.find(t => t.agent && t.agent === e.role);   // the room 대표 made for this subagent: exact, even when its desks are full
+      const t = own || f.teams.find(t => fits(t) && free(t)) || f.teams.find(free);
+      s.desk = (t && free(t)) || f.staffDesks.find(d => !d.owner) || f.staffDesks.at(-1);
+      s.team = own?.name ?? t?.name ?? f.teams.find(t => inRoom(t, s.desk))?.name ?? null;
       s.desk.owner = s;
       f.agents.set(e.agent, s);
       f.crew.add(s);
       refreshSign(f);
+      const room = f.teams.find(r => r.name === s.team);
+      if (room) {   // the hand-off: the lead names the team, its plate lights up
+        act(lead, () => { say(lead, `${room.name}에 맡길게요 · ${e.text}`, 2200); });
+        room.el.classList.remove('ping'); void room.el.offsetWidth; room.el.classList.add('ping');
+      }
       act(s, async () => {
         await elevator(f, true);
         await go(s, deskFront(lead.desk, -0.9 + (f.made % 3) * 0.9)); face(s, lead);
@@ -1396,11 +1393,12 @@ export function handle(e) {
         await sleep(900);
         await toDesk(s);
       });
-      return { who: s, text: `${t.name} 출근 · ${e.text}`, tone: 'hire' };
+      return { who: s, text: `${s.team || '직원'} 출근 · ${e.text}`, tone: 'hire' };
     }
     case 'leave':
       if (!a) return null;
       f.agents.delete(e.agent);
+      refreshSign(f);
       act(a, async () => {
         a.typing = false; a.doing.textContent = '';
         await go(a, deskFront(lead.desk, -0.9 + (f.made % 3) * 0.9)); face(a, lead);
@@ -1500,15 +1498,18 @@ function refreshSign(f) {
   st.textContent = f.asks.size ? '승인 대기' : f.busy ? '작업 중' : '쉬는 중';
   st.dataset.state = f.asks.size ? 'ask' : f.busy ? 'busy' : 'idle';
   for (const t of f.teams) {
-    const n = [...f.crew].filter(s => s.team === t.key).length;
-    const ask = [...f.asks.values()].some(w => w.team === t.key);
+    if (editing === f) continue;   // plates are name fields while arranging
+    const n = [...f.agents.values()].filter(s => s.team === t.name).length;
+    const ask = [...f.asks.values()].some(w => w.team === t.name);
     t.el.dataset.state = ask ? 'ask' : n ? 'busy' : 'idle';
     t.el.textContent = `${t.name} · ${ask ? '승인 대기' : n ? `${n}명 일하는 중` : '비어 있음'}`;
   }
 }
 export const floorState = id => {
   const f = floors.get(id);
-  return f && { busy: f.busy, asks: f.asks.size, staff: f.agents.size - 1, lead: f.lead.name };
+  return f && { busy: f.busy, asks: f.asks.size, staff: f.agents.size - 1, lead: f.lead.name,
+    teams: f.teams.map(t => ({ name: t.name, linked: !!t.agent, n: [...f.agents.values()].filter(s => s.team === t.name).length,
+                              ask: [...f.asks.values()].some(w => w.team === t.name) })) };
 };
 
 // ---------- floors in / out ----------
@@ -1522,7 +1523,7 @@ export function setFloors(list) {
     let f = floors.get(info.id);
     if (!f) { f = makeFloor(info, i); floors.set(info.id, f); }
     f.info = info;
-    if (f.id !== editing?.id) applyLayout(f);   // don't yank pieces out from under an active edit
+    if (f.id !== editing?.id) { if (JSON.stringify(roomsOf(info)) !== f.roomsKey) buildRooms(f); applyLayout(f); }   // don't yank pieces out from under an active edit
     f.base = LOBBY + i * FH;
     refreshSign(f);
     refreshAlert(f);
@@ -1550,7 +1551,7 @@ function layout() {
     f.hinge.visible = f.open < 0.98;
     const inside = current === f.id;
     for (const a of f.live) a.label.visible = inside;
-    for (const t of f.teams) t.obj.visible = inside;
+    showPlates(f);
     f.signObj.visible = !current;
     f.alertObj.visible = f.asks.size > 0 && !inside;
   }
@@ -1631,7 +1632,88 @@ const ROOM_X = FW / 2 - 0.5, ROOM_Z = FD / 2 - 0.45;
 const at = (o, lx, lz) => V(lx, lz).applyAxisAngle(new THREE.Vector3(0, 1, 0), o.rotation.y).add(V(o.position.x, o.position.z));
 const settled = (a, seat) => a && !a.path.length && a.g.position.distanceTo(seat) < 0.05;   // resting right on that seat
 // desks and the lounge moved → move their seats, and anyone sitting in them
+const inRoom = (t, d) => d.o.position.x > t.x0 && d.o.position.x < t.x1 && d.o.position.z > ROOM_FRONT;
+let onRoom = () => {};
+export const onRoomClick = cb => onRoom = cb;   // a name plate was clicked → (floor id, room index, { name, agent })
+function buildRooms(f, r = roomsOf(f.info)) {   // (re)make walls, carpets and name plates
+  for (const k of Object.keys(f.movables)) if (k.startsWith('part')) { f.g.remove(f.movables[k]); delete f.movables[k]; }
+  for (const t of f.rooms || []) { f.g.remove(t.carpet); t.carpet.material.dispose(); t.obj.element.remove(); f.g.remove(t.obj); }
+  f.roomsKey = JSON.stringify(r);
+  f.parts = r.walls.map((x, i) => {
+    const o = new THREE.Group();
+    o.position.set(x, 0, ROOM_ZC); o.userData = { home: [x, ROOM_ZC, 0], wall: true };
+    add(o, wallGeo, f.paperMat, 0, 1.1, 0); add(o, wallTopGeo, f.trimMat, 0, 2.25, 0);
+    f.g.add(o);
+    return f.movables[`part${i}`] = o;
+  });
+  let c = 0;
+  f.rooms = r.names.map((name, i) => {
+    const carpet = add(f.g, carpetGeo, toon(ROOM_COLORS[c % ROOM_COLORS.length]), 0, 0.05, ROOM_ZC, { shadow: false });
+    if (name) c++;
+    carpet.receiveShadow = true; carpet.visible = !!name;
+    const el = document.createElement('button');
+    el.className = 'team-sign';
+    const t = { name, agent: r.agents?.[i] || '', carpet, el, obj: new CSS2DObject(el) };
+    el.dataset.linked = t.agent ? '1' : '';
+    el.title = t.agent ? `AI 팀 '${t.agent}' · 눌러서 팀 설정` : '눌러서 팀 설정';
+    el.onclick = () => onRoom(f.id, i, { name: t.name, agent: t.agent });
+    t.obj.position.set(0, 0.1, FD / 2 - 0.45);   // on the room's front edge, clear of heads and speech bubbles
+    f.g.add(t.obj);
+    return t;
+  });
+  f.teams = f.rooms.filter(t => t.name);
+  editRooms(f);
+  syncSeats(f);
+}
+const roomsNow = f => ({ walls: f.parts.map(o => Math.round(o.position.x * 100) / 100), names: f.rooms.map(t => t.name), agents: f.rooms.map(t => t.agent) });
+const showPlates = f => { for (const t of f.rooms) t.obj.visible = current === f.id && (!!t.name || editing === f); };
+function editRooms(f) {   // 배치 mode also shows the unnamed spaces' plates, so they can be made into teams
+  showPlates(f);
+  for (const t of f.rooms) t.el.dataset.edit = editing === f ? '1' : '';
+  if (editing === f) for (const t of f.rooms) { t.el.textContent = t.name; delete t.el.dataset.state; }
+  else if (f.lead) refreshSign(f);
+}
+export function setRoom(id, i, { name, agent }) {   // 팀 설정 saved: rename the room / link it to a project subagent
+  const f = floors.get(id), t = f?.rooms[i];
+  if (!t) return;
+  name = String(name || '').trim().slice(0, 12);
+  for (const s of f.crew) if (s.team === t.name) s.team = name || null;
+  const r = roomsNow(f); r.names[i] = name; r.agents[i] = name ? agent || '' : '';
+  buildRooms(f, r);
+  saveLayout(f);
+}
+export function addWall() {   // splits the widest space in half; the new right half starts unnamed
+  const f = editing;
+  if (!f || f.parts.length >= MAX_WALLS) return false;
+  const r = roomsNow(f), xs = [-FW / 2, ...r.walls, FW / 2];
+  let i = 0;
+  for (let k = 1; k < xs.length - 1; k++) if (xs[k + 1] - xs[k] > xs[i + 1] - xs[i]) i = k;
+  if (xs[i + 1] - xs[i] < 2 * MIN_ROOM) return false;
+  r.walls.splice(i, 0, snap((xs[i] + xs[i + 1]) / 2));
+  r.names.splice(i + 1, 0, ''); r.agents.splice(i + 1, 0, '');
+  buildRooms(f, r);
+  saveLayout();
+  return true;
+}
+function removeWall(k) {   // the two spaces become one, keeping the left room (or the right if the left was unnamed)
+  const f = editing, i = +k.slice(4), r = roomsNow(f), keep = r.names[i] ? i : i + 1;
+  r.walls.splice(i, 1);
+  r.names.splice(i, 2, r.names[keep]); r.agents.splice(i, 2, r.agents[keep]);
+  buildRooms(f, r);
+  saveLayout();
+}
+// walls keep their order and a minimum room width; carpets and name plates follow their walls
+function fitRooms(f) {
+  const p = f.parts, xs = [-FW / 2, ...p.map(o => o.position.x), FW / 2];
+  p.forEach((o, i) => { o.position.x = xs[i + 1] = THREE.MathUtils.clamp(o.position.x, xs[i] + MIN_ROOM, FW / 2 - (p.length - i) * MIN_ROOM); });
+  f.rooms.forEach((t, i) => {
+    t.x0 = xs[i]; t.x1 = xs[i + 1];
+    t.carpet.position.x = t.obj.position.x = (t.x0 + t.x1) / 2;
+    t.carpet.scale.x = t.x1 - t.x0 - 0.2;
+  });
+}
 function syncSeats(f) {
+  if (f.parts) fitRooms(f);
   for (const d of f.desks) {
     const on = d.owner?.desk === d && settled(d.owner, d.seat);
     d.seat.copy(at(d.o, 0, -0.8)); d.rot = d.o.rotation.y;
@@ -1650,13 +1732,14 @@ export const deskFront = (d, lx) => at(d.o, lx, 1.0);
 function applyLayout(f) {
   const saved = f.info.layout || {};
   for (const [k, o] of Object.entries(f.movables)) {
-    const [x, z, r] = saved[k] || o.userData.home;
+    const [x, z, r] = (!k.startsWith('part') && saved[k]) || o.userData.home;
     o.position.set(x, 0, z); o.rotation.y = r;
     if (o.visible) keepInside(f, o);
   }
   if (f.desks) syncSeats(f);
 }
-const layoutOf = f => Object.fromEntries(Object.entries(f.movables).filter(([, o]) => {
+const layoutOf = f => Object.fromEntries(Object.entries(f.movables).filter(([k, o]) => {
+  if (k.startsWith('part')) return false;   // walls are saved with the rooms
   const [x, z, r] = o.userData.home;
   return o.position.x !== x || o.position.z !== z || Math.abs(turn(o.rotation.y) - turn(r)) > 1e-6;
 }).map(([k, o]) => [k, [o.position.x, o.position.z, turn(o.rotation.y)]]));   // only what moved from home
@@ -1667,21 +1750,25 @@ const ring = new THREE.Mesh(new THREE.RingGeometry(0.8, 0.95, 40).rotateX(-Math.
 ring.visible = false;
 scene.add(ring);
 export function setEditing(on) {
+  const was = editing;
   editing = on && current ? floors.get(current) : null;
+  if (was && was !== editing) editRooms(was);
+  if (editing) editRooms(editing);
   held = picked = null; ring.visible = false; onPick(null);
   renderer.domElement.style.cursor = '';
   return !!editing;
 }
-function saveLayout() {
-  editing.info = { ...editing.info, layout: layoutOf(editing) };
-  onLayout(editing.id, editing.info.layout);
+function saveLayout(f = editing) {
+  f.info = { ...f.info, layout: layoutOf(f), rooms: roomsNow(f) };
+  f.roomsKey = JSON.stringify(f.info.rooms);
+  onLayout(f.id, f.info.layout, f.info.rooms);
 }
 export function resetLayout() {
   if (!editing) return;
   editing.info = { ...editing.info, layout: {} };
-  applyLayout(editing);
+  applyLayout(editing);   // furniture only: rooms are 대표's own
   picked = null; ring.visible = false; onPick(null);
-  onLayout(editing.id, {});
+  onLayout(editing.id, {}, roomsNow(editing));
 }
 function pickAt(e) {   // → the movable under the pointer, or null
   ray.setFromCamera(new THREE.Vector2(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), camera);
@@ -1716,6 +1803,8 @@ const pickedKey = () => picked && Object.keys(editing.movables).find(k => editin
 let onPick = () => {};
 export const onPickChange = cb => onPick = cb;   // 배치 mode: the selected piece's key (or null), for the 빼기 button
 export function dropPicked() {   // the piece was taken out of the room: clear the selection
+  const k = pickedKey();
+  if (k?.startsWith('part')) removeWall(k);
   picked = null; ring.visible = false; onPick(null);
 }
 const showRing = () => { if (picked) ring.position.set(picked.position.x, editing.g.position.y + 0.06, picked.position.z); ring.visible = !!picked; };
@@ -1761,7 +1850,7 @@ renderer.domElement.addEventListener('wheel', e => {   // wheel over a piece tur
   showRing();
 }, { capture: true, passive: false });
 addEventListener('keydown', e => {
-  if (editing && (e.key === 'r' || e.key === 'R') && !e.target.closest?.('input, textarea')) rotatePicked(Math.PI / 4);
+  if (editing && (e.key === 'r' || e.key === 'R') && !e.target.closest?.('input, textarea, select, #team')) rotatePicked(Math.PI / 4);
 });
 
 // ---------- loop ----------

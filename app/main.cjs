@@ -11,6 +11,7 @@ const path = require('path');
 const readline = require('readline');
 const { parse, describe } = require('./stream.cjs');
 const skills = require('./skills.cjs');
+const agents = require('./agents.cjs');
 const history = require('./history.cjs');
 const music = require('./music.cjs');
 const account = require('./account.cjs')(path.join(app.getPath('userData'), 'account.bin'));
@@ -43,7 +44,7 @@ const STORE = path.join(app.getPath('userData'), 'floors.json');
 let floors = [];
 try { floors = JSON.parse(fs.readFileSync(STORE, 'utf8')); } catch {}
 const save = () => fs.writeFileSync(STORE, JSON.stringify(floors, null, 2));
-const view = () => floors.map(({ id, name, path, auto, layout }) => ({ id, name, path, auto: !!auto, layout: layout || {}, busy: runs.has(id) }));
+const view = () => floors.map(({ id, name, path, auto, layout, rooms }) => ({ id, name, path, auto: !!auto, layout: layout || {}, rooms, busy: runs.has(id) }));
 function addFloor(dir) {
   dir = path.resolve(dir);
   const found = floors.find(f => f.path.toLowerCase() === dir.toLowerCase());
@@ -154,6 +155,9 @@ function spawnClaude(f, floorId, task, extraEnv) {
   }] }] } };
   const args = ['-p', '--output-format', 'stream-json', '--verbose', '--settings', JSON.stringify(settings)];
   if (f.session) args.push('--resume', f.session);
+  const defs = agents.list(f.path), r = f.rooms;
+  const note = agents.leadNote((r?.agents || []).flatMap((id, i) => { const a = id && defs.find(d => d.name === id); return a ? [{ ...a, room: r.names[i] }] : []; }));
+  if (note) args.push('--append-system-prompt', note);
   // ponytail: ELECTRON_RUN_AS_NODE leaks into the agent's Bash env; give hook.cjs its own launcher if a project runs Electron
   const proc = spawn('claude', args, { cwd: f.path,
     env: { ...process.env, ...extraEnv, OFFICE_PORT: port, OFFICE_TOKEN: token, OFFICE_FLOOR: f.id, ELECTRON_RUN_AS_NODE: '1' } });
@@ -225,11 +229,26 @@ function answer(id, ok) {
 ipcMain.on('answer', (_, floor, id, ok) => answer(id, ok));
 // 배치 mode: { pieceKey: [x, z, rotation] } for decor moved away from its default spot
 const cleanLayout = l => Object.fromEntries(Object.entries(l && typeof l === 'object' ? l : {}).slice(0, 40)
-  .filter(([k, v]) => /^[a-z0-9]{1,20}$/.test(k) && Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) < 20)));
-ipcMain.handle('set-layout', (_, id, layout) => {
+  .filter(([k, v]) => /^[a-z0-9-]{1,20}$/.test(k) && Array.isArray(v) && v.length === 3 && v.every(n => Number.isFinite(n) && Math.abs(n) < 20)));
+// team rooms: wall x positions (left to right) and a name per space between them ('' = open space)
+// agents[i]: the project subagent (.claude/agents/<id>.md) that room i is, or '' for a plain room
+const cleanRooms = r => {
+  const walls = Array.isArray(r?.walls) ? r.walls.slice(0, 7) : [], names = Array.isArray(r?.names) ? r.names : [];
+  if (!walls.every(n => Number.isFinite(n) && Math.abs(n) < 12) || names.length !== walls.length + 1) return undefined;
+  const ids = Array.isArray(r.agents) ? r.agents : [];
+  return { walls: [...walls].sort((a, b) => a - b), names: names.map(n => typeof n === 'string' ? n.trim().slice(0, 12) : ''),
+           agents: names.map((_, i) => agents.NAME.test(ids[i] || '') ? ids[i] : '') };
+};
+// 팀 설정: the floor's project subagents
+const floorOf = id => floors.find(x => x.id === id);
+ipcMain.handle('teams', (_, id) => { const f = floorOf(id); return f ? agents.list(f.path) : []; });
+ipcMain.handle('team-save', (_, id, a, old) => { const f = floorOf(id); return f ? agents.save(f.path, a, old) : { ok: false, message: '층을 찾을 수 없어요.' }; });
+ipcMain.handle('team-remove', (_, id, name) => { const f = floorOf(id); return f ? agents.remove(f.path, name) : { ok: false }; });
+ipcMain.handle('set-layout', (_, id, layout, rooms) => {
   const f = floors.find(x => x.id === id);
   if (!f) return false;
   f.layout = cleanLayout(layout);
+  if (rooms !== undefined) f.rooms = cleanRooms(rooms);
   save();
   return true;
 });

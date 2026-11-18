@@ -5,6 +5,7 @@ import * as shop from './store.js';
 import { paper } from './paper.js';
 import * as deco from './deco.js';
 import * as attend from './attend.js';
+import { openTeam } from './team.js';
 import * as sound from './sound.js';
 import './soundui.js';
 
@@ -131,19 +132,22 @@ function setArranging(on) {
   on = world.setEditing(on);
   $('#arrange').setAttribute('aria-pressed', String(on));
   $('#arrange').lastChild.textContent = on ? '완료' : '배치 바꾸기';
-  $('#arrange-reset').hidden = !on;
+  $('#arrange-reset').hidden = $('#arrange-wall').hidden = !on;
   if (!on) $('#arrange-drop').hidden = true;
   $('#plaque').toggleAttribute('data-arranging', on);
   const f = floors.find(x => x.id === world.currentFloor());
-  $('#plaque-path').textContent = on ? '눌러 고르고 끌어 옮기기 · 휠·R 회전 · Delete 빼기' : f?.path || '';
+  $('#plaque-path').textContent = on ? '끌어 옮기기 · 휠 회전 · 이름표 눌러 팀 설정' : f?.path || '';
 }
 $('#arrange').onclick = () => setArranging($('#arrange').getAttribute('aria-pressed') !== 'true');
 $('#arrange-reset').onclick = () => world.resetLayout();
+world.onRoomClick(openTeam);
+$('#arrange-wall').onclick = () => world.addWall() || toast({ id: 'wall', icon: 'key', tone: 'quest', ttl: 3000, title: '벽을 더 세울 자리가 없어요', body: '방이 너무 좁아지지 않게 벽은 7개까지예요.' });
 // 빼기: take the selected piece out of this floor (desks stay: staff sit at them). It comes back from 꾸미기 상점 → 가구.
 let pickedPiece = null;
-const pieceItem = k => k?.startsWith('plant') ? 'plants' : k?.startsWith('desk') ? null : k;
-world.onPickChange(k => { pickedPiece = k; $('#arrange-drop').hidden = !pieceItem(k); });
+const pieceItem = k => k?.startsWith('plant') ? 'plants' : /^(desk|part)/.test(k) ? null : k;   // desks and partitions stay
+world.onPickChange(k => { pickedPiece = k; $('#arrange-drop').hidden = !pieceItem(k) && !k?.startsWith('part'); });
 async function dropPiece() {
+  if (pickedPiece?.startsWith('part')) return world.dropPicked();   // a wall: the two rooms become one
   const id = pieceItem(pickedPiece), fid = world.currentFloor();
   if (!id || !fid) return;
   const r = await office.shopEquip(id, false, fid);
@@ -153,11 +157,12 @@ async function dropPiece() {
   toast({ id: 'drop', icon: 'check', tone: 'done', ttl: 4000, title: '뺐어요', body: '꾸미기 상점 → 가구에서 다시 배치할 수 있어요.' });
 }
 $('#arrange-drop').onclick = dropPiece;
-addEventListener('keydown', e => { if ((e.key === 'Delete' || e.key === 'Backspace') && !$('#arrange-drop').hidden && !e.target.closest?.('input, textarea')) dropPiece(); });
-world.onLayoutChange((id, layout) => {
-  office.setLayout(id, layout);
+addEventListener('keydown', e => { if ((e.key === 'Delete' || e.key === 'Backspace') && !$('#arrange-drop').hidden && !e.target.closest?.('input, textarea, select, #team')) dropPiece(); });
+world.onLayoutChange((id, layout, rooms) => {
+  office.setLayout(id, layout, rooms);
   const f = floors.find(x => x.id === id);
-  if (f) f.layout = layout;   // keep the cached list in step so a later setFloors doesn't undo the move
+  if (f) Object.assign(f, { layout, rooms });   // keep the cached list in step so a later setFloors doesn't undo the move
+  renderTeams();
 });
 $('#approve-mode').onclick = async e => {
   const b = e.target.closest('button[data-auto]'), id = world.currentFloor();
@@ -208,20 +213,32 @@ function log(entry) {
   renderLog();
 }
 const CHAT = new Set(['order', 'done', 'past']);   // conversation lines; the rest is work activity
-let logFloor;
+let logFloor, logTeam = null;   // logTeam: the team board chip picked to read only that team's lines
+// team board: one chip per team room with who's working or waiting; a chip filters the journal to that team
+function renderTeams() {
+  const st = world.currentFloor() && world.floorState(world.currentFloor()), box = $('#journal-teams');
+  const teams = st?.teams || [];
+  if (logTeam && !teams.some(t => t.name === logTeam)) logTeam = null;
+  box.hidden = !teams.length;
+  box.innerHTML = `<button data-team="" aria-pressed="${!logTeam}">전체</button>` + teams.map(t =>
+    `<button data-team="${esc(t.name)}" aria-pressed="${logTeam === t.name}" data-state="${t.ask ? 'ask' : t.n ? 'busy' : 'idle'}"${t.linked ? ' data-linked="1"' : ''}>${esc(t.name)}${t.ask ? ' · 승인 대기' : t.n ? ` · ${t.n}명` : ''}</button>`).join('');
+}
+$('#journal-teams').onclick = e => { const b = e.target.closest('[data-team]'); if (b) { logTeam = b.dataset.team || null; renderLog(); } };
 function renderLog() {
   const cur = world.currentFloor(), ol = $('#journal ol');
+  if (cur !== logFloor) logTeam = null;
+  renderTeams();
   const stick = cur !== logFloor || ol.scrollHeight - ol.scrollTop - ol.clientHeight < 60;   // don't yank a reader scrolled up
   logFloor = cur;
-  const rows = logs.filter(l => !cur || l.floor === cur).slice(-120);
+  const rows = logs.filter(l => (!cur || l.floor === cur) && (!logTeam || l.team === logTeam)).slice(-120);
   $('#journal-title').textContent = cur ? '이 층의 일지' : '건물 전체 일지';
   $('#talks-btn').hidden = !cur;
   const today = new Date().toDateString();
   ol.innerHTML = rows.length ? rows.map(l => {
     const fi = floors.findIndex(f => f.id === l.floor);
     return `<li data-tone="${l.tone}"${CHAT.has(l.tone) ? ' class="chat"' : ''}><time>${l.at.toDateString() === today ? l.at.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : `${l.at.getMonth() + 1}/${l.at.getDate()}`}</time>
-      <span class="who">${cur ? '' : `<span class="chip">${fi + 2}F</span>`}${esc(l.who)}</span><span class="txt">${ICON[l.icon] || ''}${esc(l.text)}</span></li>`;
-  }).join('') : `<li class="none">${cur ? '아직 조용해요. 아래에서 팀장에게 일을 맡겨 보세요.' : '층에 들어가 일을 맡기면 여기에 기록돼요.'}</li>`;
+      <span class="who">${cur ? '' : `<span class="chip">${fi + 2}F</span>`}${esc(l.who)}${l.team && !logTeam ? ` <span class="chip">${esc(l.team)}</span>` : ''}</span><span class="txt">${ICON[l.icon] || ''}${esc(l.text)}</span></li>`;
+  }).join('') : `<li class="none">${logTeam ? `${esc(logTeam)}은 아직 맡은 일이 없어요.` : cur ? '아직 조용해요. 아래에서 팀장에게 일을 맡겨 보세요.' : '층에 들어가 일을 맡기면 여기에 기록돼요.'}</li>`;
   if (stick) ol.scrollTop = ol.scrollHeight;
 }
 
@@ -265,7 +282,8 @@ office.on(e => {
   }
   if (e.kind === 'ask' || e.kind === 'done') sound.sfx(e.kind);
   const line = world.handle(e);
-  if (line) log({ floor: e.floor, who: line.who.name, rank: line.who.rank, text: line.text, tone: line.tone, icon: line.icon });
+  if (line) log({ floor: e.floor, who: line.who.name, rank: line.who.rank, team: line.who.team, text: line.text, tone: line.tone, icon: line.icon });
+  else renderTeams();   // someone left or a run ended: the team board still changes
   if (e.kind === 'ask' && line) asks.set(e.id, { floor: e.floor, who: line.who.name, rank: line.who.rank, text: e.text, icon: e.icon });
   if (e.kind === 'answer') asks.delete(e.id);
   if (['ask', 'answer'].includes(e.kind)) renderAsks();

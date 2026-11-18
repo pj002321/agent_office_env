@@ -46,6 +46,14 @@
   .team-sign { font: 13px var(--display); background: rgba(255,255,255,.88); color: var(--ink-soft); border-radius: 12px; padding: 3px 10px; box-shadow: 0 2px 5px rgba(74,58,46,.15); white-space: nowrap; pointer-events: none; }
   .team-sign[data-state="busy"] { background: var(--card); color: var(--ink); }
   .team-sign[data-state="ask"] { background: var(--coral); color: #fff; }
+  button.team-sign { pointer-events: auto; cursor: pointer; border: 0; transition: transform .15s; }
+  button.team-sign:hover { transform: translateY(-2px); }
+  .team-sign.ping { animation: ping 1.4s ease-out 2; }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(37,120,111,.7); } 100% { box-shadow: 0 0 0 14px rgba(37,120,111,0); } }
+  @media (prefers-reduced-motion: reduce) { .team-sign.ping { animation: none; } }
+  .team-sign[data-linked="1"]::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--teal); margin-right: 6px; vertical-align: 1px; }
+  .team-sign[data-edit="1"] { outline: 2px dashed var(--brass); min-width: 4em; }
+  .team-sign[data-edit="1"]:empty::after { content: '+ 팀 만들기'; color: var(--ink-soft); }
   .floor-sign { pointer-events: auto; display: flex; align-items: center; gap: 8px; background: var(--card); border-radius: 18px; padding: 4px 10px 4px 4px; box-shadow: var(--shadow); font: 15px var(--display); transition: transform .2s; }
   .floor-sign:hover { transform: translateX(4px); }
   .floor-sign .fl { background: var(--brass); border-radius: 50%; width: 34px; height: 34px; display: grid; place-items: center; }
@@ -112,6 +120,13 @@
   .chip { font: 12px var(--display); background: #fff3dc; color: #8a5a3c; border-radius: 8px; padding: 1px 7px; margin-right: 4px; }
   #journal { flex: 1; min-height: 0; display: flex; flex-direction: column; background: rgba(255,255,255,.94); border-radius: 22px; box-shadow: var(--shadow); padding: 14px 6px 8px 16px; }
   #journal-title { font: 18px var(--display); margin: 0; }
+  #journal-teams { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 8px 8px 0; }
+  #journal-teams[hidden] { display: none; }
+  #journal-teams button { font: 13px var(--display); padding: 4px 10px; border-radius: 999px; background: #f3ede4; color: var(--ink-soft); }
+  #journal-teams button[data-linked="1"]::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); margin-right: 5px; vertical-align: 1px; }
+  #journal-teams button[data-state="busy"] { background: var(--leaf-soft); color: var(--leaf); }
+  #journal-teams button[data-state="ask"] { background: var(--coral-soft); color: var(--coral); }
+  #journal-teams button[aria-pressed="true"] { background: var(--teal); color: #fff; }
   #journal > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 8px 8px 0; }
   #talks-btn { display: inline-flex; align-items: center; gap: 4px; font: 13px var(--display); color: var(--teal-deep); background: #e1f4f1; border-radius: 12px; padding: 4px 10px; }
   #talks-btn svg, #talks svg { width: 14px; height: 14px; stroke-width: 2.2; }
@@ -410,6 +425,36 @@
   /* ---------- 출석체크 ---------- */
   #open-attend { grid-column: 1 / -1; flex-direction: row; justify-content: center; position: relative; }
   #attend-dot { position: absolute; top: 8px; right: 12px; width: 9px; height: 9px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 2px var(--teal-deep); }
+  #team { position: fixed; inset: 0; z-index: 7; background: rgba(40, 30, 20, .42); display: grid; place-items: center; animation: fade .2s; }
+  #team[hidden], #team-body[hidden], #team-keep[hidden] { display: none; }
+  .team-card { width: min(620px, calc(100vw - 48px)); max-height: calc(100vh - 48px); overflow: auto; background: #fffaf2; border-radius: 30px; padding: 22px 24px; box-shadow: 0 30px 80px rgba(40,30,20,.4); animation: rise .35s cubic-bezier(.16,1,.3,1); display: grid; gap: 12px; }
+  .team-card header { display: flex; align-items: flex-start; gap: 10px; }
+  .team-card header div { flex: 1; }
+  .team-card h2 { margin: 0; font: 26px var(--display); font-weight: normal; color: var(--ink); }
+  .team-card header p { margin: 2px 0 0; color: var(--ink-soft); font-size: 14px; }
+  .team-card .fld { display: grid; gap: 5px; font: 14px var(--display); color: var(--ink); border: 0; margin: 0; padding: 0; }
+  .team-card .fld.row { grid-template-columns: auto 1fr; align-items: center; gap: 12px; }
+  .team-card .fld.row > :last-child { justify-self: start; }
+  .team-card small { color: var(--ink-soft); font: 12px var(--body); }
+  .team-card input:not([type=radio]), .team-card select, .team-card textarea { border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; font: 14px var(--body); color: var(--ink); background: #fffdf8; width: 100%; box-sizing: border-box; }
+  .team-card textarea { resize: vertical; }
+  .team-card input:focus-visible, .team-card select:focus-visible, .team-card textarea:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .team-card .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .team-card fieldset { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  .team-card legend { margin-bottom: 5px; }
+  .team-card fieldset label { font: 14px var(--body); display: inline-flex; gap: 5px; align-items: center; }
+  #team-body { display: grid; gap: 12px; }
+  #team-tpl { display: flex; flex-wrap: wrap; gap: 6px; }
+  #team-tpl .chip { font-size: 14px; padding: 4px 12px; border-radius: 10px; margin: 0; }
+  #team-tpl .chip:hover { background: var(--butter); }
+  .team-card .hint { margin: 0; color: var(--ink-soft); font-size: 13px; }
+  #team-err { margin: 0; color: var(--coral); font-size: 14px; min-height: 1em; }
+  #team-err:empty { display: none; }
+  .team-card footer { display: flex; gap: 8px; align-items: center; }
+  .team-card footer span { flex: 1; }
+  .team-card .act { background: #f3ede4; color: var(--ink); padding: 9px 18px; font-size: 15px; }
+  .team-card .act.primary { background: var(--teal); color: #fff; }
+  #team-del { background: var(--coral-soft); color: var(--coral); }
   #attend { position: fixed; inset: 0; z-index: 7; background: rgba(40, 30, 20, .42); display: grid; place-items: center; animation: fade .2s; }
   .attend-card { width: min(760px, calc(100vw - 48px)); background: #fffaf2; border-radius: 30px; padding: 22px 24px 26px; box-shadow: 0 30px 80px rgba(40,30,20,.4); animation: rise .35s cubic-bezier(.16,1,.3,1); }
   .attend-card header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 18px; }
@@ -459,6 +504,7 @@
 
 <div id="plaque" hidden>
   <div><span id="plaque-name"></span><span id="plaque-path"></span></div>
+  <button id="arrange-wall" class="plaque-btn" data-icon="plus" hidden>벽 세우기</button>
   <button id="arrange-drop" class="plaque-btn" data-icon="trash" hidden>빼기</button>
   <button id="arrange-reset" class="plaque-btn" data-icon="refresh" hidden>처음대로</button>
   <button id="arrange" class="plaque-btn" data-icon="tool" aria-pressed="false">배치 바꾸기</button>
@@ -467,7 +513,7 @@
 
 <aside id="side">
   <div id="asks" aria-live="polite"></div>
-  <section id="journal"><header><h2 id="journal-title">건물 전체 일지</h2><button id="talks-btn" data-icon="read" hidden>지난 대화</button></header><ul id="talks" hidden></ul><ol></ol></section>
+  <section id="journal"><header><h2 id="journal-title">건물 전체 일지</h2><button id="talks-btn" data-icon="read" hidden>지난 대화</button></header><ul id="talks" hidden></ul><nav id="journal-teams" aria-label="팀별로 보기" hidden></nav><ol></ol></section>
   <form id="order" data-mode="outside">
     <div class="head">
       <label id="to" for="task"></label>
@@ -531,6 +577,32 @@
   <section class="attend-card" role="dialog" aria-label="출석체크">
     <header><div><h2>출석체크</h2><p id="attend-sub"></p></div><button id="attend-close" class="icon-btn" aria-label="닫기"></button></header>
     <ol id="attend-grid"></ol>
+  </section>
+</div>
+
+<div id="team" hidden>
+  <section class="team-card" role="dialog" aria-modal="true" aria-labelledby="team-title">
+    <header><div><h2 id="team-title">팀 설정</h2><p>AI 팀으로 쓰면 여기 적은 대로 일해요. 팀장은 맞는 일을 이 팀에 맡겨요.</p></div><button id="team-close" class="icon-btn" aria-label="닫기"></button></header>
+    <label class="fld"><span>방 이름</span><input id="team-name" maxlength="12" placeholder="예: 디자인팀 · 비우면 그냥 빈 공간" autocomplete="off"></label>
+    <div class="fld row"><span>AI 팀으로 쓰기</span><button id="team-ai" class="switch" role="switch" aria-checked="false" aria-label="AI 팀으로 쓰기"></button></div>
+    <div id="team-body">
+      <div class="fld row"><span>빠르게 시작</span><div id="team-tpl"></div></div>
+      <div class="two">
+        <label class="fld"><span>팀</span><select id="team-pick"></select></label>
+        <label class="fld"><span>팀 ID <small>영어 소문자·하이픈</small></span><input id="team-id" maxlength="40" placeholder="design-team" autocomplete="off" spellcheck="false"></label>
+      </div>
+      <label class="fld"><span>맡을 일 <small>팀장이 이걸 보고 일을 나눠요</small></span><input id="team-desc" maxlength="300" placeholder="예: 화면 구성과 스타일을 다듬는다" autocomplete="off"></label>
+      <label class="fld"><span>일하는 방식 · 규칙</span><textarea id="team-prompt" rows="5" placeholder="예: 기존 색과 글꼴을 따른다. 바꾼 이유를 짧게 보고한다."></textarea></label>
+      <fieldset class="fld"><legend>할 수 있는 일</legend>
+        <label><input type="radio" name="team-tools" value="all"> 전부</label>
+        <label><input type="radio" name="team-tools" value="edit"> 고치기까지 <small>(명령 실행 X)</small></label>
+        <label><input type="radio" name="team-tools" value="read"> 읽고 조사만</label>
+        <label id="team-keep"><input type="radio" name="team-tools" value="keep"> 지금 설정 그대로 <small><span></span></small></label>
+      </fieldset>
+      <p class="hint">프로젝트의 <code>.claude/agents/</code>에 저장돼요. 다음 주문부터 적용돼요.</p>
+    </div>
+    <p id="team-err" role="alert"></p>
+    <footer><button id="team-del" class="act" hidden>이 팀 지우기</button><span></span><button id="team-cancel" class="act">취소</button><button id="team-save" class="act primary">저장</button></footer>
   </section>
 </div>
 
