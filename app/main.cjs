@@ -12,7 +12,6 @@ const readline = require('readline');
 const { parse, describe } = require('./stream.cjs');
 const skills = require('./skills.cjs');
 const history = require('./history.cjs');
-const shop = require('./shop.cjs');
 const music = require('./music.cjs');
 const account = require('./account.cjs')(path.join(app.getPath('userData'), 'account.bin'));
 
@@ -68,14 +67,22 @@ app.on('second-instance', (_, argv, cwd) => {
 
 const send = e => win?.webContents.send('office', e);
 
-// ---------- wallet (꾸미기 상점) ----------
-const WALLET = path.join(app.getPath('userData'), 'wallet.json');
-let wallet;
-try { wallet = shop.load(JSON.parse(fs.readFileSync(WALLET, 'utf8'))); } catch { wallet = shop.fresh(); }
+// ---------- wallet (꾸미기 상점): lives on the server under the account (supabase/functions/wallet) ----------
+const LOCAL_WALLET = path.join(app.getPath('userData'), 'wallet.json');   // pre-account wallet, carried over once
 const localDate = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const walletView = () => ({ ...wallet, items: shop.ITEMS, packs: shop.PACKS, earn: shop.EARN, account: account.view(),
-  rewards: shop.REWARDS, attendedToday: wallet.attend.last === localDate() });
-const saveWallet = () => fs.writeFileSync(WALLET, JSON.stringify(wallet, null, 2));
+let wallet = null;   // last view from the server; null until signed in
+const BLANK = { points: 0, xp: 0, level: 1, into: 0, next: 50, owned: [], equip: { building: 'house', wall: 'wall-theme', floor: 'floor-wood' },
+  furniture: [], rooms: {}, attend: { day: 0, last: null }, attendedToday: true, items: [], packs: [], earn: 0, xpPerOrder: 0, rewards: [] };
+const walletView = () => ({ ...(wallet || BLANK), account: account.view() });
+async function walletOp(op, args = {}) {
+  if (op === 'get' && !wallet) try { args.local = JSON.parse(fs.readFileSync(LOCAL_WALLET, 'utf8')); } catch {}
+  const r = await account.wallet({ op, today: localDate(), ...args });
+  if (r.wallet) wallet = r.wallet;
+  if (r.adopted) try { fs.renameSync(LOCAL_WALLET, LOCAL_WALLET + '.moved'); } catch {}   // now in the account; never hand it to a second one
+  return { ...r, wallet: walletView() };
+}
+const fail = e => ({ ok: false, message: e.message, wallet: walletView() });
+const walletCall = (op, args) => walletOp(op, args).catch(fail);
 
 // ---------- headroom: route floors through the user's own `headroom proxy` when it's up ----------
 const PREFS = path.join(app.getPath('userData'), 'prefs.json');
@@ -152,8 +159,7 @@ function spawnClaude(f, floorId, task, extraEnv) {
     env: { ...process.env, ...extraEnv, OFFICE_PORT: port, OFFICE_TOKEN: token, OFFICE_FLOOR: f.id, ELECTRON_RUN_AS_NODE: '1' } });
   runs.set(floorId, proc);
   proc.stdin.end(task);
-  shop.earn(wallet); saveWallet();
-  send({ kind: 'wallet', earned: shop.EARN, wallet: walletView() });
+  walletOp('earn').then(r => r.ok && send({ kind: 'wallet', earned: r.points, xp: r.xp, levelUp: r.levelUp, wallet: r.wallet }), () => {});
 
   const subs = new Set();
   readline.createInterface({ input: proc.stdout }).on('line', line => {
@@ -190,7 +196,7 @@ ipcMain.handle('add-floor', async () => {
 ipcMain.handle('remove-floor', (_, id) => {
   runs.get(id)?.kill();
   floors = floors.filter(f => f.id !== id);
-  if (wallet.rooms[id]) { delete wallet.rooms[id]; saveWallet(); }
+  if (wallet?.rooms[id]) walletCall('drop-room', { fid: id });
   save();
   return view();
 });
@@ -275,18 +281,18 @@ ipcMain.handle('music-add', async () => {
   return r.canceled ? music.list(MUSIC) : music.add(MUSIC, r.filePaths);
 });
 ipcMain.handle('music-remove', (_, id) => music.remove(MUSIC, id));
-ipcMain.handle('wallet', () => walletView());
+ipcMain.handle('wallet', async () => { if (!wallet && account.view().user) await walletCall('get'); return walletView(); });
 // fid: the floor being decorated (interior items); only floors that exist
 const fidOf = fid => floors.some(f => f.id === fid) ? fid : undefined;
-const shopCall = r => { if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; };
-ipcMain.handle('shop-buy', (_, id, fid) => shopCall(shop.buy(wallet, String(id), fidOf(fid))));
-ipcMain.handle('shop-equip', (_, id, on, fid) => shopCall(shop.equip(wallet, String(id), on !== false, fidOf(fid))));
-const fail = e => ({ ok: false, message: e.message, wallet: walletView() });
-ipcMain.handle('login', () => account.login().then(() => ({ ok: true, wallet: walletView() }), fail));
-ipcMain.handle('logout', () => { account.logout(); return { ok: true, wallet: walletView() }; });
+ipcMain.handle('shop-buy', (_, id, fid) => walletCall('buy', { id: String(id), fid: fidOf(fid) }));
+ipcMain.handle('shop-equip', (_, id, on, fid) => walletCall('equip', { id: String(id), on: on !== false, fid: fidOf(fid) }));
+ipcMain.handle('login', (_, provider) => account.login(provider === 'google' ? 'google' : 'github').then(() => walletOp('get')).then(r => ({ ...r, ok: true }), fail));
+ipcMain.handle('logout', () => { account.logout(); wallet = null; return { ok: true, wallet: walletView() }; });
 ipcMain.handle('checkout', (_, pack) => account.checkout(String(pack)).then(() => ({ ok: true }), fail));
-ipcMain.handle('claim', () => account.purchases().then(list => shopCall(shop.claim(wallet, list)), fail));
-ipcMain.handle('attend', () => { const r = shop.attend(wallet, localDate()); if (r.ok) saveWallet(); return { ...r, wallet: walletView() }; });
+ipcMain.handle('claim', () => walletCall('claim'));
+ipcMain.handle('attend', () => walletCall('attend'));
+ipcMain.handle('admin', (_, act, n) => walletCall('admin', { act: String(act), n: Number(n) }));
+ipcMain.handle('admin-stats', () => account.wallet({ op: 'admin-stats' }).catch(fail));
 ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
 
 app.whenReady().then(() => {

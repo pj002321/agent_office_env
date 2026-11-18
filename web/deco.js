@@ -1,4 +1,4 @@
-// 꾸미기 상점: spend points earned per order on the building tier and interior items. Data spec: app/shop.cjs.
+// 꾸미기 상점: spend points earned per order on the building tier and interior items. Rules: supabase/functions/_shared/shop.js (runs on the server).
 import { ICON } from './icons.js';
 import * as world from './world.js';
 import { sfx } from './sound.js';
@@ -26,8 +26,16 @@ const closeDeco = () => { $('#deco').hidden = true; };
 
 export function setWallet(w) {
   wallet = w;
+  $('#acct-email').textContent = w.account.user?.email || '내 계정';
+  $('#admin').hidden = !w.isAdmin;
+  if (w.isAdmin && document.activeElement !== $('#admin-level')) $('#admin-level').value = w.level;
   $('#points').textContent = P(w.points);
-  world.setLook({ building: w.equip.building, base: { wall: w.equip.wall, floor: w.equip.floor, furniture: w.furniture }, rooms: w.rooms });
+  $('#level-num').textContent = `Lv.${w.level}`;
+  $('#level-xp').textContent = `${w.into} / ${w.next} XP`;
+  $('#level-fill').style.width = `${Math.round(w.into / w.next * 100)}%`;
+  const { building, ...styles } = w.equip;
+  world.setLook({ building, base: { ...styles, furniture: w.furniture }, rooms: w.rooms });
+  world.setLevel(w.level);
   if (!$('#deco').hidden) render();
 }
 
@@ -37,12 +45,13 @@ export function bump(n = wallet?.earn || 10) {
   c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');   // reflow restarts the animation
 }
 
-const INTERIOR = ['wall', 'floor', 'furniture'];
-const room = () => wallet.rooms[fid] || { wall: wallet.equip.wall, floor: wallet.equip.floor, furniture: wallet.furniture };
+const INTERIOR = ['wall', 'floor', 'desk', 'sofa', 'pc', 'furniture'];
+const room = () => { const { building, ...styles } = wallet.equip; return { ...styles, furniture: wallet.furniture, hidden: [], ...wallet.rooms[fid] }; };
 const isOn = it => it.slot === 'building' ? wallet.equip.building === it.id
-  : it.slot === 'furniture' ? room().furniture.includes(it.id) : room()[it.slot] === it.id;
+  : it.builtin ? !room().hidden.includes(it.id) : it.slot === 'furniture' ? room().furniture.includes(it.id) : room()[it.slot] === it.id;
 function action(it) {
   if (!wallet.owned.includes(it.id)) {
+    if (wallet.level < it.level) return `<button class="act busy" disabled>Lv.${it.level} 필요</button>`;
     if (it.requires && !wallet.owned.includes(it.requires)) return `<button class="act busy" disabled>${esc(wallet.items.find(x => x.id === it.requires).name)} 먼저</button>`;
     const short = it.price - wallet.points;
     if (short > 0) return `<button class="act busy" disabled>${P(it.price)} · ${P(short)} 부족</button>`;
@@ -54,18 +63,22 @@ function action(it) {
     : `<button class="act worn" disabled>${ICON.check}장착 중</button>`;
   return `<button class="act wear" data-equip="${esc(it.id)}">${furn ? '배치' : '장착'}</button>`;
 }
-const card = it => `
-  <article class="card">
-    <span class="swatch" style="background:${esc(it.swatch)}"></span>
+const card = it => {
+  const locked = !wallet.owned.includes(it.id) && wallet.level < it.level;
+  const pic = world.thumb(it);
+  return `
+  <article class="card${locked ? ' locked' : ''}">
+    <span class="swatch shot${it.slot === "wall" || it.slot === "floor" ? " tile" : ""}" ${pic ? `style="background-image:url(${pic})"` : ''}>${locked ? `<b class="lock">${ICON.key || ''}Lv.${it.level}</b>` : ''}</span>
     <div class="body"><h3>${esc(it.name)}</h3><p class="desc">${esc(it.desc)}</p></div>
     <footer>${it.slot === 'building' && isOn(it) ? '<span class="now">지금 건물</span>'
       : wallet.owned.includes(it.id) ? '<span class="pop">가지고 있어요</span>' : '<span></span>'}${action(it)}</footer>
   </article>`;
+};
 
 function render() {
   for (const b of document.querySelectorAll('#deco .tabs button')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
   $('#deco-points').textContent = P(wallet.points);
-  $('#deco-earn').textContent = `팀장에게 일을 맡길 때마다 ${wallet.earn}P가 쌓여요. 모은 포인트로 건물과 사무실을 꾸며 보세요`;
+  $('#deco-earn').textContent = `Lv.${wallet.level} · 다음 레벨까지 ${wallet.next - wallet.into}XP. 일을 맡길 때마다 ${wallet.xpPerOrder}XP와 ${wallet.earn}P가 쌓여요`;
   const grid = $('#deco-grid');
   grid.dataset.tab = tab;
   $('#deco-floor-pick').hidden = !INTERIOR.includes(tab) || !floors.length;
@@ -75,9 +88,7 @@ function render() {
   }
   if (tab === 'packs') {
     const { ready, user } = wallet.account;
-    const who = !ready ? '' : `<p class="muted" style="grid-column:1/-1">${user
-      ? `${esc(user.email || 'GitHub 계정')}으로 로그인했어요. 결제가 끝나면 이 창으로 돌아오는 순간 포인트가 들어와요. <button class="act wear" data-logout>로그아웃</button>`
-      : '충전한 포인트는 계정에 기록돼요. 처음 충전할 때 GitHub로 로그인해요.'}</p>`;
+    const who = !user ? '' : `<p class="muted" style="grid-column:1/-1">${esc(user.email || 'GitHub 계정')}으로 로그인했어요. 결제가 끝나고 앱으로 돌아오면 포인트가 들어와요. <button class="act wear" data-logout>로그아웃</button></p>`;
     grid.innerHTML = who + wallet.packs.map(p => `
       <article class="card">
         <span class="swatch coin">P</span>
@@ -89,7 +100,7 @@ function render() {
     return;
   }
   const list = wallet.items.filter(i => i.slot === tab);
-  grid.innerHTML = tab === 'building' ? list.map(card).join(`<span class="arrow">${ICON.go}</span>`) : list.map(card).join('');
+  grid.innerHTML = list.map(card).join('');
 }
 
 async function act(call, it) {
@@ -119,7 +130,7 @@ $('#deco').onclick = e => {
   const b = t.closest('[data-buy]'); if (b) { b.disabled = true; return buy(item(b, 'buy')); }
   const on = t.closest('[data-equip]'); if (on) return act(office.shopEquip(on.dataset.equip, true, fid), item(on, 'equip'));
   const off = t.closest('[data-off]'); if (off) return act(office.shopEquip(off.dataset.off, false, fid), item(off, 'off'));
-  if (t.closest('[data-logout]')) return act(office.logout(), { name: '로그아웃' });
+  if (t.closest('[data-logout]')) return office.logout().then(() => location.reload());
   const pack = t.closest('[data-pack]');
   if (pack) return (async () => {
     if (!wallet.account.user && !(await act(office.login(), { name: '로그인' }))) return;
@@ -131,6 +142,26 @@ $('#deco-floor').onchange = e => { fid = e.target.value; render(); };
 $('#deco').onkeydown = e => { if (e.key === 'Escape') closeDeco(); };
 
 export const setNotify = fn => notify = fn;
+// 관리자: only shown when the server says this account is an admin; the server checks again on every call
+$('#admin').onclick = async e => {
+  const b = e.target.closest('[data-admin]');
+  if (!b) return;
+  const kind = b.dataset.admin;
+  if (kind === 'reset' && !confirmReset) { confirmReset = true; b.textContent = '정말 초기화?'; return; }
+  confirmReset = false; $('[data-admin="reset"]').textContent = '내 지갑 초기화';
+  const r = await act(office.admin(kind, kind === 'level' ? Number($('#admin-level').value) : Number(b.dataset.n || 0)), { name: '관리자' });
+  if (r) notify({ icon: 'check', tone: 'done', title: '관리자', body: `적용했어요 · Lv.${wallet.level} · ${P(wallet.points)}` });
+};
+let confirmReset = false;
+$('#admin-stats-btn').onclick = async () => {
+  const r = await office.adminStats();
+  if (!r.ok) return $('#admin-out').textContent = r.message;
+  const s = r.stats;
+  $('#admin-out').textContent = [`가입자 ${s.users ?? '?'}명 · 지갑 ${s.wallets}개`, `최고 Lv.${s.topLevel} · 평균 Lv.${s.avgLevel}`,
+    `결제 ${s.orders}건 · 환불 ${s.refunds}건`, ...s.revenue.map(x => `매출 ${(x.total / (x.currency === 'KRW' ? 1 : 100)).toLocaleString()} ${x.currency}`),
+    ...s.recent.map(p => `· ${p.created_at.slice(0, 10)} ${p.total} ${p.currency} ${p.status}`)].join('\n');
+};
+$('#acct-out').onclick = () => office.logout().then(() => location.reload());   // reload → the sign-in paper
 
 // paid orders land on the server via webhook; pick them up whenever the user comes back to the app
 async function claim() {

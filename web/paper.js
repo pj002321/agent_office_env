@@ -6,14 +6,14 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};
 let line = Promise.resolve();   // one paper at a time
 
 // paper({ kind, title, intro, items: [[label, text]], code, agree, yes, no }) → Promise<boolean>
-// no: null makes it impossible to wave away (Esc and the backdrop do nothing).
+// no: null makes it impossible to wave away (Esc and the backdrop do nothing); sticky keeps the no button but ignores Esc/backdrop.
 export function paper(opts) {
   const p = line.then(() => show(opts));
   line = p.catch(() => {});
   return p;
 }
 
-function show({ kind = '허가 요청서', title, intro = '', items = [], code = '', agree = '', yes = '도장 찍기', no = '그만두기' }) {
+function show({ kind = '허가 요청서', title, intro = '', items = [], code = '', agree = '', yes = '도장 찍기', no = '그만두기', sticky = false }) {
   return new Promise(done => {
     const prev = document.activeElement;
     const el = document.createElement('div');
@@ -52,9 +52,9 @@ function show({ kind = '허가 요청서', title, intro = '', items = [], code =
     };
     $('.yes').onclick = () => close(true);
     if (no) $('.no').onclick = () => close(false);
-    el.onclick = e => { if (e.target === el && no) close(false); };
+    el.onclick = e => { if (e.target === el && no && !sticky) close(false); };
     el.onkeydown = e => {
-      if (e.key === 'Escape' && no) close(false);
+      if (e.key === 'Escape' && no && !sticky) close(false);
       if (e.key === 'Tab') {   // keep focus on the paper
         const f = [...el.querySelectorAll('button:not(:disabled)')];
         const i = f.indexOf(document.activeElement);

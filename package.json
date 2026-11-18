@@ -8,7 +8,7 @@
   "main": "app/main.cjs",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.cjs",
+    "test": "node --test test/*.test.cjs test/*.test.mjs",
     "dist": "electron-builder"
   },
   "build": {

@@ -235,7 +235,13 @@ $('#talks').onclick = e => { const b = e.target.closest('[data-session]'); if (b
 
 // ---------- events ----------
 office.on(e => {
-  if (e.kind === 'wallet') { deco.setWallet(e.wallet); if (e.earned) { deco.bump(e.earned); sound.sfx('coin'); } return; }
+  if (e.kind === 'wallet') {
+    deco.setWallet(e.wallet);
+    if (e.earned) { deco.bump(e.earned); sound.sfx('coin'); }
+    if (e.levelUp) toast({ id: 'level', icon: 'spark', tone: 'done', ttl: 7000, title: `Lv.${e.levelUp.level} 달성!`,
+      body: `보너스 ${e.levelUp.bonus}P를 받았어요. 꾸미기 상점에 새로 살 수 있는 물건이 생겼는지 확인해 보세요.` });
+    return;
+  }
   if (e.kind === 'ask' || e.kind === 'done') sound.sfx(e.kind);
   const line = world.handle(e);
   if (line) log({ floor: e.floor, who: line.who.name, rank: line.who.rank, text: line.text, tone: line.tone, icon: line.icon });
@@ -264,6 +270,20 @@ if (!localStorage.getItem(TERMS)) {
     agree: '위 내용을 읽고 이해했어요', yes: '입주하기', no: '나가기' });
   if (!ok) window.close();
   else localStorage.setItem(TERMS, new Date().toISOString());
+}
+// sign-in is required: points, XP and items live with the account, so they follow the user to other computers
+if (!(await office.wallet()).account.user) {
+  for (;;) {
+    const google = await paper({ kind: '사원증 발급', title: '로그인하고 출근해요',
+      intro: '레벨, 포인트, 산 아이템은 계정에 저장돼요. 다른 컴퓨터에서 같은 계정으로 로그인하면 그대로 이어져요.',
+      items: [['Google 또는 GitHub로', '브라우저에서 로그인 화면이 열려요. 이메일 주소만 받아요.'],
+              ['CLI 로그인과는 따로예요', 'Claude · Codex 로그인 정보는 지금처럼 이 앱이 읽거나 저장하지 않아요.'],
+              ['이 컴퓨터의 꾸미기는', '처음 로그인할 때 지금까지 모은 아이템과 꾸미기가 계정으로 옮겨져요.']],
+      yes: 'Google로 로그인', no: 'GitHub로 로그인', sticky: true });
+    const r = await office.login(google ? 'google' : 'github');
+    if (r.ok) { location.reload(); await new Promise(() => {}); }   // modules reload with the account's wallet
+    toast({ id: 'login', icon: 'key', tone: 'quest', ttl: 8000, title: '로그인하지 못했어요', body: r.message || '다시 시도해 주세요.' });
+  }
 }
 await loadFloors();
 renderLog();

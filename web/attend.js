@@ -1,4 +1,4 @@
-// 출석체크: 7-day points board, one claim per local day. Rules + state: app/shop.cjs attend(); main.cjs owns the date.
+// 출석체크: 7-day points board, one claim per local day. Rules: supabase/functions/_shared/shop.js attend(); the server checks the date.
 import { ICON } from './icons.js';
 import { sfx } from './sound.js';
 import { setWallet, bump } from './deco.js';

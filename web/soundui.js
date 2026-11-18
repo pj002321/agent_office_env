@@ -38,7 +38,7 @@ function render() {
   const s = sound.state;
   btn.dataset.on = s.bgm || s.sfx ? '1' : '0';
   btn.dataset.playing = s.playing ? '1' : '0';
-  btn.innerHTML = s.bgm || s.sfx ? ICON.speaker : ICON.mute;
+  btn.innerHTML = ICON.gear;
   if (pop.hidden) return;
   $('#bgm-on').setAttribute('aria-checked', String(!!s.bgm));
   $('#sfx-on').setAttribute('aria-checked', String(!!s.sfx));
