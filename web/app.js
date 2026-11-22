@@ -293,6 +293,9 @@ office.on(e => {
   if (e.kind === 'auth') loginQuest(e.cli, 'login');
   if (e.kind === 'headroom-down') toast({ id: 'headroom', icon: 'bolt', tone: 'quest', ttl: 6000, title: 'Headroom이 꺼져 있어요',
     body: '이번 일은 프록시 없이 그냥 실행해요. 터미널에서 headroom proxy를 켜면 다음 일부터 거쳐 가요.' });
+  if (e.kind === 'update') toast({ id: 'update', icon: 'spark', tone: 'info', title: `새 버전 ${e.version}이 나왔어요`,
+    body: '받아서 설치하면 사무실과 기록은 그대로 이어져요.',
+    actions: [['받으러 가기', 'yes', () => { office.openUrl(e.url); closeToast('update'); }], ['나중에', 'no', () => closeToast('update')]] });
 });
 
 await world.ready();

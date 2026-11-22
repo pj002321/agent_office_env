@@ -228,12 +228,73 @@ function tween(ms, step) {
   return new Promise(done => tweens.add({ t0: performance.now(), ms, step, done }));
 }
 
-// ---------- island & sky ----------
+export const FW = 24, FD = 9, FH = 3.4;   // wide floor: back row (대표·팀장) + corridor, then team rooms and a lounge in front
+const glowText = (text, fg, bg) => canvasTex(512, 160, g => {
+  g.fillStyle = bg; g.beginPath(); g.roundRect(0, 0, 512, 160, 30); g.fill();
+  g.font = '96px Jua'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.shadowColor = fg; g.shadowBlur = 24; g.fillStyle = '#ffffff'; g.fillText(text, 256, 86);
+  g.shadowBlur = 0; g.strokeStyle = fg; g.lineWidth = 8; g.beginPath(); g.roundRect(10, 10, 492, 140, 24); g.stroke();
+});
+// ---------- island & village ----------
+// laid out around the building (FW × FD at the origin, door at +z): a paved square with a fountain out front,
+// one path to the island's edge lined with flower beds, tree groves on both sides, a pond, and a hedge rim.
+// The left front stays clear: the facade swings out there when a floor opens.
+const IR = 34, IZ = 3;   // island radius and centre z
 const island = new THREE.Group();
 scene.add(island);
-add(island, new THREE.CylinderGeometry(24, 21, 2.4, 48), [toon(0xb08a64), toon(0x9fd685), toon(0x9fd685)], 0, -1.2, 2);
-add(island, new THREE.CylinderGeometry(3.2, 3.2, 0.06, 32), 0xf3e4c4, 0, 0.03, 13);   // plaza
-for (let i = 0; i < 6; i++) add(island, new THREE.CylinderGeometry(0.75, 0.75, 0.06, 20), 0xeee0c0, (i % 2 ? 0.35 : -0.35), 0.03, 6 + i * 1.15);
+const grassTex = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#a3d98a'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 260; i++) {   // soft tufts so the lawn isn't one flat colour
+    g.fillStyle = i % 3 ? 'rgba(126,190,108,.35)' : 'rgba(196,232,160,.45)';
+    const x = (i * 97) % w, y = (i * 61 + (i % 7) * 13) % h;
+    g.beginPath(); g.ellipse(x, y, 5 + i % 4, 2 + i % 2, (i % 5) * 0.6, 0, 7); g.fill();
+  }
+}, [10, 10]);
+const paveTex = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#e6d6b8'; g.fillRect(0, 0, w, h);
+  const tones = ['#f3e6cc', '#efdfc2', '#f6ebd5', '#ead9bb'];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+    g.fillStyle = tones[(r * 3 + c) % 4];
+    g.beginPath(); g.roundRect(c * 64 + (r % 2) * 32 - 32 + 3, r * 64 + 3, 58, 58, 10); g.fill();
+    g.beginPath(); g.roundRect(c * 64 + (r % 2) * 32 + 32 + 3, r * 64 + 3, 58, 58, 10); g.fill();
+  }
+}, [1, 1]);
+const pave = (w, d) => { const t = paveTex.clone(); t.needsUpdate = true; t.repeat.set(w / 2.2, d / 2.2); return toon(0xffffff, t); };
+add(island, new THREE.CylinderGeometry(IR, IR - 2.5, 2.4, 72), [toon(0xb08a64), toon(0xffffff, grassTex), toon(0xb08a64)], 0, -1.2, IZ).receiveShadow = true;
+add(island, new THREE.ConeGeometry(IR - 2.5, 16, 72, 1, true).rotateX(Math.PI), 0x9a7656, 0, -10.4, IZ, { shadow: false });   // rocky underside: it floats
+for (let i = 0; i < 9; i++) {   // a few rocks hanging off the underside
+  const a = i * 0.7 + 0.3, r = IR - 6 - (i % 3) * 4;
+  add(island, new THREE.DodecahedronGeometry(1.6 + (i % 3) * 0.6), 0x8a6a4c, Math.cos(a) * r, -4 - (i % 4) * 1.6, Math.sin(a) * r + IZ, { shadow: false });
+}
+
+// the square: paving, fountain, benches facing it
+const SQ = { z: FD / 2 + 5.2, w: 15, d: 7.4 };
+add(island, rbox(SQ.w, 0.08, SQ.d, 0.04), pave(SQ.w, SQ.d), 0, 0.03, SQ.z, { shadow: false }).receiveShadow = true;
+add(island, rbox(4.2, 0.08, 2.2, 0.04), pave(4.2, 2.2), 0, 0.035, FD / 2 + 1.3, { shadow: false }).receiveShadow = true;   // door step
+const PATH_Z0 = SQ.z + SQ.d / 2, PATH_Z1 = IZ + IR - 2;
+add(island, rbox(3.2, 0.08, PATH_Z1 - PATH_Z0, 0.04), pave(3.2, PATH_Z1 - PATH_Z0), 0, 0.03, (PATH_Z0 + PATH_Z1) / 2, { shadow: false }).receiveShadow = true;
+const water = new THREE.MeshToonMaterial({ color: 0x8fd6f2, gradientMap: ramp, transparent: true, opacity: 0.9 });
+{ const fz = SQ.z;
+  add(island, new THREE.CylinderGeometry(2.3, 2.5, 0.55, 40), 0xd9c7a5, 0, 0.3, fz, { outline: 0.03 });
+  add(island, new THREE.CylinderGeometry(2.0, 2.0, 0.06, 40), water, 0, 0.56, fz, { shadow: false });
+  add(island, new THREE.CylinderGeometry(0.28, 0.4, 1.4, 16), 0xd9c7a5, 0, 1.2, fz);
+  add(island, new THREE.CylinderGeometry(0.95, 0.5, 0.3, 28), 0xd9c7a5, 0, 1.95, fz, { outline: 0.03 });
+  add(island, new THREE.CylinderGeometry(0.8, 0.8, 0.05, 28), water, 0, 2.1, fz, { shadow: false });
+  const jet = add(island, sphere(0.22, 14, 10), water, 0, 2.4, fz, { shadow: false });
+  const drops = [0, 1, 2, 3, 4, 5].map(i => add(island, sphere(0.09, 8, 6), water, 0, 2.2, fz, { shadow: false }));
+  anims.push(t => {
+    jet.scale.y = 1.3 + Math.sin(t * 6) * 0.25;
+    drops.forEach((d, i) => { const k = (t * 0.8 + i / 6) % 1, a = i / 6 * Math.PI * 2;
+      d.position.set(Math.cos(a) * (0.4 + k * 1.2), 2.3 + k * 0.7 - k * k * 2.1, fz + Math.sin(a) * (0.4 + k * 1.2)); });
+  }); }
+function bench(x, z, ry, parent = island) {
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; parent.add(g);
+  add(g, rbox(2.0, 0.14, 0.6, 0.05), 0xc98f5a, 0, 0.5, 0);
+  add(g, rbox(2.0, 0.5, 0.12, 0.05), 0xc98f5a, 0, 0.85, -0.26);
+  for (const s of [-0.8, 0.8]) add(g, rbox(0.12, 0.45, 0.5, 0.03), 0x5a4a3e, s, 0.22, 0);
+}
+bench(-5.6, SQ.z, Math.PI / 2); bench(5.6, SQ.z, -Math.PI / 2);
+
 const sway = [];
 function tree(x, z, s = 1, tint = 0x7cc58a, parent = island) {
   const g = new THREE.Group();
@@ -246,37 +307,72 @@ function tree(x, z, s = 1, tint = 0x7cc58a, parent = island) {
   parent.add(g);
   sway.push(g);
 }
-[[-14.5, 1.5, 1.2], [-15, 9, 1], [14.8, 2.5, 1.15], [15, 10, 0.95, 0x9ad08f], [-9, 15, 0.85, 0x9ad08f], [9.5, 15.5, 0.9],
- [-17, -4, 1.1, 0x6fbf86], [17, -5, 1.05, 0x6fbf86]].forEach(t => tree(...t));
-const FLOWER = [0xffffff, 0xffd45e, 0xff9fb2, 0xc9b3f5];
-for (let i = 0; i < 70; i++) {
-  const a = i * 2.4, r = 9 + (i * 37 % 11);
-  const x = Math.cos(a) * r, z = Math.sin(a) * r + 3;
-  if (Math.abs(x) < 9 && z < 10) continue;
-  add(island, sphere(0.14, 8, 6), FLOWER[i % 4], x, 0.12, z, { shadow: false });
+function pine(x, z, s = 1, parent = island) {   // a second tree shape so the groves don't look stamped
+  const g = new THREE.Group(); g.position.set(x, 0, z); g.scale.setScalar(s); parent.add(g);
+  add(g, new THREE.CylinderGeometry(0.18, 0.26, 1, 8), 0x9a6b4a, 0, 0.5, 0);
+  for (let k = 0; k < 3; k++) add(g, new THREE.ConeGeometry(1.3 - k * 0.3, 1.5, 12), [0x5fae7a, 0x6fbf86, 0x82cc94][k], 0, 1.3 + k * 0.8, 0, { outline: 0.03 });
+  sway.push(g);
 }
+// groves: behind and beside the building, and the right front; left front kept clear for the swinging facade
+[[-FW / 2 - 3, -6, 1.2], [-FW / 2 - 3.5, 4, 1], [-FW / 2 - 9, -6, 1.1, 0x6fbf86], [-21, 13, 1.1, 0x9ad08f], [-23, 19, 0.95],
+ [FW / 2 + 3, -6, 1.15, 0x9ad08f], [FW / 2 + 3.5, 4.5, 1], [FW / 2 + 9.5, -5.5, 1.1, 0x6fbf86], [15, 26, 0.9], [-13, 30, 0.85, 0x9ad08f],
+ [-6, -10, 1.05, 0x6fbf86], [6.5, -10.5, 0.95]].forEach(t => tree(...t));
+[[-FW / 2 - 5, -8.5, 1.2], [FW / 2 + 5.5, -8, 1.1], [-25, 7, 1], [24.5, 9, 1.1], [-19, 24, 0.9], [11, -12, 1]].forEach(t => pine(...t));
+
+// flower beds along the path and the square's front corners
+const FLOWER = [0xffffff, 0xffd45e, 0xff9fb2, 0xc9b3f5];
+function bed(x, z, w, d) {
+  add(island, rbox(w, 0.28, d, 0.12), 0xb5835a, x, 0.14, z);
+  add(island, rbox(w - 0.2, 0.06, d - 0.2, 0.05), 0x7a5a40, x, 0.29, z, { shadow: false });
+  const n = Math.round(w * d * 2.2);
+  for (let i = 0; i < n; i++) {
+    const fx = x + ((i * 0.618) % 1 - 0.5) * (w - 0.5), fz = z + ((i * 0.37 + i * i * 0.013) % 1 - 0.5) * (d - 0.5);
+    add(island, new THREE.CylinderGeometry(0.025, 0.025, 0.3, 4), 0x6fae5c, fx, 0.45, fz, { shadow: false });
+    add(island, sphere(0.13, 8, 6), FLOWER[i % 4], fx, 0.62, fz, { shadow: false });
+  }
+}
+for (const z of [PATH_Z0 + 3, PATH_Z0 + 8.5, PATH_Z0 + 14]) for (const sx of [-1, 1]) bed(sx * 3, z, 1.6, 3.6);
+for (const sx of [-1, 1]) bed(sx * (SQ.w / 2 + 1.6), SQ.z + 1.6, 1.8, 3);
+
+// street lamps at the square's corners
 const lampMat = new THREE.MeshBasicMaterial({ color: 0xf3ecd2 });
 const haloMat = new THREE.MeshBasicMaterial({ color: 0xffd97a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
 function lamp(x, z, parent = island) {
   add(parent, new THREE.CylinderGeometry(0.07, 0.09, 2.4, 8), 0x4a5a6a, x, 1.2, z);
-  add(parent, sphere(0.28), lampMat, x, 2.5, z, { shadow: false });
-  add(parent, sphere(0.9), haloMat, x, 2.5, z, { shadow: false });
+  add(parent, rbox(0.5, 0.14, 0.5, 0.05), 0x4a5a6a, x, 2.42, z);
+  add(parent, sphere(0.26), lampMat, x, 2.62, z, { shadow: false });
+  add(parent, sphere(0.9), haloMat, x, 2.62, z, { shadow: false });
 }
-lamp(-3.6, 9); lamp(3.6, 9);
-add(island, rbox(2.2, 0.16, 0.6, 0.06), 0xc98f5a, 5.5, 0.55, 12.2);                 // bench
-add(island, rbox(2.2, 0.6, 0.12, 0.05), 0xc98f5a, 5.5, 0.9, 11.95);
-// rim: bushes and rocks all the way round
-for (let i = 0; i < 28; i++) {
-  const a = i * Math.PI * 2 / 28, r = 19.5 + (i % 4) * 0.8, x = Math.cos(a) * r, z = Math.sin(a) * r + 2;
-  if (i % 3) add(island, sphere(0.7 + (i % 2) * 0.3, 12, 10), [0x7cc58a, 0x6fbf86, 0x9ad08f][i % 3], x, 0.3, z, { outline: 0.04 }).scale.y = 0.75;
-  else add(island, new THREE.DodecahedronGeometry(0.6), 0xb9b2a6, x, 0.25, z);
+for (const sx of [-1, 1]) for (const z of [SQ.z - SQ.d / 2 + 0.5, SQ.z + SQ.d / 2 - 0.5]) lamp(sx * (SQ.w / 2 - 0.5), z);
+
+// welcome sign where the path meets the edge
+{ const g = new THREE.Group(); g.position.set(2.6, 0, PATH_Z1 - 1.5); g.rotation.y = -0.35; island.add(g);
+  for (const s of [-0.9, 0.9]) add(g, new THREE.CylinderGeometry(0.08, 0.1, 1.5, 8), 0x9a6b4a, s, 0.75, 0);
+  add(g, rbox(2.3, 0.75, 0.12, 0.08), 0xc98f5a, 0, 1.35, 0, { outline: 0.03 });
+  add(g, new THREE.PlaneGeometry(2.1, 0.6), new THREE.MeshBasicMaterial({ map: glowText('COZY OFFICE', '#fff3dc', '#a56f45') }), 0, 1.35, 0.07, { shadow: false }); }
+
+// pond on the right front, with lily pads and reeds
+{ const px = 14, pz = 17;
+  add(island, new THREE.CylinderGeometry(3.4, 3.4, 0.08, 40).scale(1.35, 1, 1), 0xd9c7a5, px, 0.04, pz, { shadow: false });
+  add(island, new THREE.CylinderGeometry(3.0, 3.0, 0.08, 40).scale(1.35, 1, 1), water, px, 0.07, pz, { shadow: false }).receiveShadow = true;
+  for (const [x, z] of [[-1.6, -0.6], [1.2, 0.9], [0.3, -1.4], [2.4, -0.3]]) add(island, new THREE.CylinderGeometry(0.38, 0.38, 0.03, 14), 0x7cc58a, px + x, 0.13, pz + z, { shadow: false });
+  for (let i = 0; i < 7; i++) add(island, new THREE.CylinderGeometry(0.04, 0.05, 1 + (i % 3) * 0.3, 5), 0x6fae5c, px - 3.6 + (i % 4) * 0.25, 0.55, pz + 1.6 - i * 0.35, { shadow: false });
+  bench(px, pz - 4.2, 0); }
+
+// rim: a hedge ring with gaps for the path, plus a few rock clusters
+for (let i = 0; i < 64; i++) {
+  const a = i * Math.PI * 2 / 64, x = Math.cos(a) * (IR - 1.4), z = Math.sin(a) * (IR - 1.4) + IZ;
+  if (Math.abs(x) < 3.2 && z > IZ) continue;   // the path's gap
+  add(island, sphere(1 + (i % 3) * 0.15, 12, 10), [0x7cc58a, 0x6fbf86, 0x9ad08f][i % 3], x, 0.45, z, { outline: 0.04 }).scale.y = 0.7;
 }
-// pond with lily pads
-add(island, new THREE.CylinderGeometry(2.2, 2.2, 0.06, 32).scale(1.3, 1, 1), 0x9fd8f0, -8, 0.04, 19, { shadow: false }).receiveShadow = true;
-for (const [x, z] of [[-9, 18.6], [-7.2, 19.6], [-8.4, 20]]) add(island, new THREE.CylinderGeometry(0.35, 0.35, 0.03, 14), 0x7cc58a, x, 0.09, z, { shadow: false });
+for (const [x, z] of [[-26, -8], [27, -2], [-9, 33]]) for (let k = 0; k < 3; k++) add(island, new THREE.DodecahedronGeometry(0.7 - k * 0.15), 0xb9b2a6, x + k * 0.8, 0.3, z + (k % 2) * 0.6);
+// wildflower patches in the lawn (clusters, not confetti)
+for (const [cx, cz] of [[-17, 4], [18, 5], [-9, 22], [9, 30], [21, 21], [-25, -2]]) for (let i = 0; i < 9; i++)
+  add(island, sphere(0.13, 8, 6), FLOWER[(i + cx) & 3], cx + Math.cos(i * 2.4) * (0.4 + i * 0.12), 0.12, cz + Math.sin(i * 2.4) * (0.4 + i * 0.12), { shadow: false });
+
 // little islands drifting far out in the sky
 const islets = [];
-for (const [x, y, z, s] of [[-70, 4, -30, 1.4], [72, 10, -20, 1.1], [-62, -8, 40, 1], [60, -4, 50, 1.2], [8, 14, -80, 1.6]]) {
+for (const [x, y, z, s] of [[-78, 4, -30, 1.4], [80, 10, -20, 1.1], [-70, -8, 46, 1], [68, -4, 56, 1.2], [8, 16, -90, 1.6]]) {
   const g = new THREE.Group();
   g.position.set(x, y, z); g.scale.setScalar(s); g.userData.y = y;
   add(g, new THREE.CylinderGeometry(4, 3.4, 0.8, 20), [toon(0xb08a64), toon(0x9fd685), toon(0x9fd685)], 0, -0.4, 0);
@@ -300,7 +396,6 @@ for (let i = 0; i < 7; i++) {
 }
 
 // ---------- building ----------
-export const FW = 24, FD = 9, FH = 3.4;   // wide floor: back row (대표·팀장) + corridor, then team rooms and a lounge in front
 const WIN = [-9.8, -5.4, -1.6, 1.6, 5.6, 9.8];   // facade windows
 const LOBBY = FH;
 const LANE = -1.4;
@@ -383,12 +478,6 @@ add(roofs.tower, rbox(0.8, 0.06, 0.06, 0.02), 0xb9c7d6, 4.5, 2.6, -2.5);
 add(roofs.tower, sphere(0.14), new THREE.MeshBasicMaterial({ color: 0xff6b6b }), 4.5, 3.65, -2.5, { shadow: false });
 
 // 네온 타워: a glowing rooftop billboard and a blinking mast
-const glowText = (text, fg, bg) => canvasTex(512, 160, g => {
-  g.fillStyle = bg; g.beginPath(); g.roundRect(0, 0, 512, 160, 30); g.fill();
-  g.font = '96px Jua'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.shadowColor = fg; g.shadowBlur = 24; g.fillStyle = '#ffffff'; g.fillText(text, 256, 86);
-  g.shadowBlur = 0; g.strokeStyle = fg; g.lineWidth = 8; g.beginPath(); g.roundRect(10, 10, 492, 140, 24); g.stroke();
-});
 const neonBoard = new THREE.Group();
 neonBoard.position.set(-1, 0.35, -2);
 roofs.neon.add(neonBoard);
@@ -587,27 +676,30 @@ function block(parent, x, z, w, d, h, color, roofColor = 0xfff3dc) {
   add(parent, rbox(w + 0.3, 0.3, d + 0.3, 0.08), roofColor, x, h + 0.15, z);
 }
 // Lv.3: more street lamps
-{ const g = stage(3); for (const [x, z] of [[-3.6, 13.5], [3.6, 13.5], [-8.5, 7], [8.5, 7], [-14, -2.5], [14, -2.5]]) lamp(x, z, g); }
-// Lv.5: neighbours — a bakery and a little shop behind the office
+{ const g = stage(3); for (const z of [PATH_Z0 + 5.7, PATH_Z0 + 11.2, PATH_Z0 + 16.5]) for (const sx of [-1, 1]) lamp(sx * 2.1, z, g); }
+// Lv.5: neighbours — a bakery and a little shop on either side of the office
 { const g = stage(5);
-  block(g, -10.5, -10, 4, 4, 4.4, 0xffd8c6, 0xff8f7a);
-  block(g, 10.5, -10, 4, 4, 5.6, 0xcfe6fb, 0x8fc0ef);
-  for (const [x, c] of [[-10.5, 0xff8f7a], [10.5, 0x8fc0ef]]) add(g, new THREE.BoxGeometry(3.4, 0.1, 1.1), toon(0xffffff, awningTex), x, 1.9, -7.5).rotation.x = 0.3; }
+  for (const [x, c, roof, h] of [[-FW / 2 - 7, 0xffd8c6, 0xff8f7a, 4.4], [FW / 2 + 7, 0xcfe6fb, 0x8fc0ef, 5.6]]) {
+    block(g, x, -1, 4.4, 4, h, c, roof);
+    add(g, new THREE.BoxGeometry(3.8, 0.1, 1.1), toon(0xffffff, awningTex), x, 1.9, 1.5).rotation.x = 0.3;
+    add(g, rbox(3, 0.08, 2.6, 0.04), pave(3, 2.6), x, 0.03, 2.6, { shadow: false });
+  } }
 // Lv.8: a road with cars
 { const g = stage(8);
-  add(g, new THREE.PlaneGeometry(34, 2.8).rotateX(-Math.PI / 2), 0x5d6470, 0, 0.04, -15, { shadow: false }).receiveShadow = true;
-  for (let x = -16; x < 17; x += 2.4) add(g, new THREE.PlaneGeometry(1.1, 0.12).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xfff3dc }), x, 0.05, -15, { shadow: false });
+  add(g, new THREE.PlaneGeometry(54, 2.8).rotateX(-Math.PI / 2), 0x5d6470, 0, 0.04, -15, { shadow: false }).receiveShadow = true;
+  for (let x = -26; x < 27; x += 2.4) add(g, new THREE.PlaneGeometry(1.1, 0.12).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xfff3dc }), x, 0.05, -15, { shadow: false });
   [[0xff8f7a, 1, 0], [0x8fc0ef, -1, 11], [0xffd45e, 1, 21], [0x8fd3b6, -1, 5]].forEach(([c, dir, off]) => {
     const car = new THREE.Group(); g.add(car);
     add(car, rbox(1.7, 0.5, 0.85, 0.15), c, 0, 0.45, 0, { outline: 0.03 });
     add(car, rbox(0.95, 0.42, 0.75, 0.14), 0xe8f6ff, -0.1, 0.85, 0);
     for (const [wx, wz] of [[-0.55, -0.42], [0.55, -0.42], [-0.55, 0.42], [0.55, 0.42]]) add(car, new THREE.CylinderGeometry(0.18, 0.18, 0.12, 14).rotateX(Math.PI / 2), 0x3a3a44, wx, 0.2, wz);
     car.rotation.y = dir > 0 ? 0 : Math.PI;
-    anims.push(t => { car.position.set(dir * (((t * 3 + off) % 34) - 17), 0, -15 - dir * 0.65); });
+    anims.push(t => { car.position.set(dir * (((t * 3 + off) % 54) - 27), 0, -15 - dir * 0.65); });
   }); }
 // Lv.12: a neon district of taller towers behind the road
 { const g = stage(12);
-  for (const [x, z, w, h, c, text, glow] of [[-6.5, -19, 3.6, 11, 0x3b3d6b, 'GAME', '#47e8ff'], [0, -19.6, 4.2, 15, 0x2b2d55, 'AI LAB', '#ff4fd8'], [6.5, -19, 3.6, 12, 0x46336b, 'CAFE', '#ffd45e']]) {
+  for (const [x, z, w, h, c, text, glow] of [[-13, -20, 3.6, 10, 0x46336b, 'MUSIC', '#8dff8a'], [-6.5, -20.5, 3.6, 13, 0x3b3d6b, 'GAME', '#47e8ff'], [0, -21, 4.2, 17, 0x2b2d55, 'AI LAB', '#ff4fd8'],
+    [6.5, -20.5, 3.6, 12, 0x46336b, 'CAFE', '#ffd45e'], [13, -20, 3.6, 9, 0x3b3d6b, 'BOOKS', '#ff9f6a']]) {
     block(g, x, z, w, 3, h, c, 0x22223f);
     add(g, new THREE.PlaneGeometry(w * 0.8, w * 0.25), new THREE.MeshBasicMaterial({ map: glowText(text, glow, '#1d1b3f') }), x, h * 0.72, z + 1.52, { shadow: false });
   } }
@@ -1927,7 +2019,7 @@ renderer.setAnimationLoop(() => {
   controls.update();
   // keep panning over the island: clamp the orbit target and drag the camera along with it
   const tg = controls.target, was = tg.clone(), clamp = THREE.MathUtils.clamp;
-  tg.set(clamp(tg.x, -12, 12), clamp(tg.y, 0, roofBase + 4), clamp(tg.z, -10, 16));
+  tg.set(clamp(tg.x, -20, 20), clamp(tg.y, 0, roofBase + 4), clamp(tg.z, -16, 28));
   camera.position.add(was.subVectors(tg, was));
   renderer.render(scene, camera);
   labels.render(scene, camera);

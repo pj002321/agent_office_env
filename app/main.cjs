@@ -13,6 +13,7 @@ const { parse, describe } = require('./stream.cjs');
 const skills = require('./skills.cjs');
 const agents = require('./agents.cjs');
 const history = require('./history.cjs');
+const update = require('./update.cjs');
 const music = require('./music.cjs');
 const account = require('./account.cjs')(path.join(app.getPath('userData'), 'account.bin'));
 
@@ -320,5 +321,6 @@ app.whenReady().then(() => {
                             webPreferences: { preload: path.join(__dirname, 'preload.cjs') } });
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, '..', 'web', 'index.html'));
+  win.webContents.once('did-finish-load', () => update.check(app.getVersion()).then(u => u && send({ kind: 'update', ...u })));
 });
 app.on('window-all-closed', () => { for (const p of runs.values()) p.kill(); app.quit(); });
