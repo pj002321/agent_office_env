@@ -1,6 +1,6 @@
 {
   "name": "agent-office",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "description": "A cozy 3D office where your own AI coding CLIs work, one floor per project",
   "author": "JaeseongHeo",

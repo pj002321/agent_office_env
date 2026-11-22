@@ -165,6 +165,7 @@ $('#acct-out').onclick = () => office.logout().then(() => location.reload());   
 $('#app-mail').onclick = () => office.openUrl('mailto:t55300354@gmail.com?subject=' + encodeURIComponent('[Cozy Office] 문의'));
 $('#app-bug').onclick = () => office.openUrl('https://github.com/pj002321/agent_office_env/issues/new');
 $('#app-quit').onclick = () => office.quit();
+office.version().then(v => { $('#app-ver').textContent = 'v' + v; });
 
 // paid orders land on the server via webhook; pick them up whenever the user comes back to the app
 async function claim() {

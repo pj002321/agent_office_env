@@ -315,6 +315,7 @@ ipcMain.handle('admin', (_, act, n) => walletCall('admin', { act: String(act), n
 ipcMain.handle('admin-stats', () => account.wallet({ op: 'admin-stats' }).catch(fail));
 ipcMain.handle('open-url', (_, url) => /^(https:\/\/|mailto:)/.test(url) && shell.openExternal(url));
 ipcMain.on('quit', () => app.quit());
+ipcMain.handle('version', () => app.getVersion());
 autoUpdater.on('error', () => {});   // offline / no release: just try again next launch
 autoUpdater.on('update-downloaded', i => send({ kind: 'update', version: i.version }));
 ipcMain.on('install-update', () => autoUpdater.quitAndInstall(true, true));   // silent install, then reopen   // window-all-closed stops any running CLIs

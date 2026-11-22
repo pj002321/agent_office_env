@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('office', {
   setHeadroom: on => ipcRenderer.invoke('set-headroom', on),
   openUrl: url => ipcRenderer.invoke('open-url', url),
   quit: () => ipcRenderer.send('quit'),
+  version: () => ipcRenderer.invoke('version'),
   installUpdate: () => ipcRenderer.send('install-update'),
   on: cb => ipcRenderer.on('office', (_, e) => cb(e)),
 });
