@@ -13,6 +13,14 @@ function renderHr(h) {
   $('#hr-state').textContent = !h.on ? '켜면 일을 맡길 때 Headroom 프록시를 거쳐요' :
     h.up ? `프록시 연결됨 · ${h.url}` : `프록시가 꺼져 있어요. 켜질 때까지 그냥 실행해요 (터미널에서 headroom proxy)`;
 }
+// light / dark: saved per machine; the first paint reads it in index.html
+const darkSw = $('#theme-dark'), root = document.documentElement;
+darkSw.setAttribute('aria-checked', String(root.dataset.theme === 'dark'));
+darkSw.onclick = () => {
+  root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('theme', root.dataset.theme);
+  darkSw.setAttribute('aria-checked', String(root.dataset.theme === 'dark'));
+};
 $('#hr-on').onclick = async () => renderHr(await office.setHeadroom($('#hr-on').getAttribute('aria-checked') !== 'true'));
 
 export function openSound() {

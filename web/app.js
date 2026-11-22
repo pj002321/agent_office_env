@@ -17,6 +17,7 @@ for (const [id, icon] of [['bag-close', 'x'], ['store-close', 'x'], ['store-refr
 let floors = [];
 const logs = [];
 const queued = {};          // floor id → orders waiting for the current run
+let update = null;   // newer release { version, url } for the bell; cleared once opened
 const asks = new Map();      // ask id → { floor, who, rank, text }
 
 async function loadFloors(list) {
@@ -196,6 +197,7 @@ function renderAsks() {
       ${cur === a.floor ? '' : `<button class="visit" data-visit="${a.floor}">가 보기 ${ICON.go}</button>`}</footer>
     </article>`;
   }).join('');
+  renderBell();
 }
 $('#asks').onclick = e => {
   const card = e.target.closest('.ask');
@@ -205,6 +207,40 @@ $('#asks').onclick = e => {
   const b = e.target.closest('[data-ok]');
   if (b) office.answer(a.floor, card.dataset.id, b.dataset.ok === '1');
 };
+
+// ---------- bell: pending approvals + app update, red count badge ----------
+function renderBell() {
+  const n = asks.size + (update ? 1 : 0), btn = $('#bell-btn');
+  btn.innerHTML = ICON.bell;
+  if (n) btn.dataset.n = n > 9 ? '9+' : n; else delete btn.dataset.n;
+  btn.setAttribute('aria-label', n ? `알림 ${n}개` : '알림');
+  if ($('#bell').hidden) return;
+  const items = [...asks].map(([id, a]) => {
+    const fi = floors.findIndex(f => f.id === a.floor);
+    return `<li><button data-floor="${esc(a.floor)}">${ICON.hand}<b>${fi + 2}F ${esc(floors[fi]?.name)} · ${esc(a.who)} 승인 요청</b><small>${esc(a.text)}</small></button></li>`;
+  });
+  if (update) items.unshift(`<li><button data-update>${ICON.spark}<b>새 버전 ${esc(update.version)}이 나왔어요</b><small>눌러서 받으러 가기</small></button></li>`);
+  $('#bell ul').innerHTML = items.join('') || '<li class="none">새 알림이 없어요</li>';
+}
+const closeBell = () => { $('#bell').hidden = true; $('#bell-btn').setAttribute('aria-expanded', 'false'); };
+$('#bell-btn').onclick = () => {
+  if (!$('#bell').hidden) return closeBell();
+  $('#bell').hidden = false; $('#bell-btn').setAttribute('aria-expanded', 'true'); renderBell();
+};
+$('#bell').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if ('update' in b.dataset) { office.openUrl(update.url); update = null; closeToast('update'); }
+  else world.enter(b.dataset.floor);
+  closeBell(); renderBell();
+};
+document.addEventListener('pointerdown', e => { if (!$('#bell').hidden && !e.target.closest('#bell, #bell-btn')) closeBell(); });
+renderBell();
+
+// ---------- 집중 검토: the journal, centred and enlarged ----------
+const setFocus = on => { document.body.classList.toggle('focus', on); $('#focus-btn').setAttribute('aria-pressed', String(on)); $('#focus-btn').lastChild.textContent = on ? '닫기' : '집중 검토'; };
+$('#focus-btn').onclick = () => setFocus(!document.body.classList.contains('focus'));
+$('#side').addEventListener('click', e => { if (e.target === $('#side')) setFocus(false); });   // the dim backdrop is #side::before
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { setFocus(false); closeBell(); } });
 
 // ---------- journal ----------
 function log(entry) {
@@ -293,9 +329,10 @@ office.on(e => {
   if (e.kind === 'auth') loginQuest(e.cli, 'login');
   if (e.kind === 'headroom-down') toast({ id: 'headroom', icon: 'bolt', tone: 'quest', ttl: 6000, title: 'Headroom이 꺼져 있어요',
     body: '이번 일은 프록시 없이 그냥 실행해요. 터미널에서 headroom proxy를 켜면 다음 일부터 거쳐 가요.' });
+  if (e.kind === 'update') { update = { version: e.version, url: e.url }; renderBell(); }
   if (e.kind === 'update') toast({ id: 'update', icon: 'spark', tone: 'info', title: `새 버전 ${e.version}이 나왔어요`,
     body: '받아서 설치하면 사무실과 기록은 그대로 이어져요.',
-    actions: [['받으러 가기', 'yes', () => { office.openUrl(e.url); closeToast('update'); }], ['나중에', 'no', () => closeToast('update')]] });
+    actions: [['받으러 가기', 'yes', () => { office.openUrl(e.url); closeToast('update'); update = null; renderBell(); }], ['나중에', 'no', () => closeToast('update')]] });
 });
 
 await world.ready();
