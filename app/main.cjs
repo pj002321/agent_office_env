@@ -13,7 +13,7 @@ const { parse, describe } = require('./stream.cjs');
 const skills = require('./skills.cjs');
 const agents = require('./agents.cjs');
 const history = require('./history.cjs');
-const update = require('./update.cjs');
+const { autoUpdater } = require('electron-updater');
 const music = require('./music.cjs');
 const account = require('./account.cjs')(path.join(app.getPath('userData'), 'account.bin'));
 
@@ -314,7 +314,10 @@ ipcMain.handle('attend', () => walletCall('attend'));
 ipcMain.handle('admin', (_, act, n) => walletCall('admin', { act: String(act), n: Number(n) }));
 ipcMain.handle('admin-stats', () => account.wallet({ op: 'admin-stats' }).catch(fail));
 ipcMain.handle('open-url', (_, url) => /^(https:\/\/|mailto:)/.test(url) && shell.openExternal(url));
-ipcMain.on('quit', () => app.quit());   // window-all-closed stops any running CLIs
+ipcMain.on('quit', () => app.quit());
+autoUpdater.on('error', () => {});   // offline / no release: just try again next launch
+autoUpdater.on('update-downloaded', i => send({ kind: 'update', version: i.version }));
+ipcMain.on('install-update', () => autoUpdater.quitAndInstall(true, true));   // silent install, then reopen   // window-all-closed stops any running CLIs
 
 app.whenReady().then(() => {
   win = new BrowserWindow({ width: 1440, height: 900, minWidth: 1100, minHeight: 700, title: 'Cozy Office',
@@ -322,6 +325,7 @@ app.whenReady().then(() => {
                             webPreferences: { preload: path.join(__dirname, 'preload.cjs') } });
   win.setMenuBarVisibility(false);
   win.loadFile(path.join(__dirname, '..', 'web', 'index.html'));
-  win.webContents.once('did-finish-load', () => update.check(app.getVersion()).then(u => u && send({ kind: 'update', ...u })));
+  // auto-update from GitHub Releases (latest.yml): downloads in the background, installs on restart or on quit
+  if (app.isPackaged) win.webContents.once('did-finish-load', () => autoUpdater.checkForUpdates().catch(() => {}));
 });
 app.on('window-all-closed', () => { for (const p of runs.values()) p.kill(); app.quit(); });

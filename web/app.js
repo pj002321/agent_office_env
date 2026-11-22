@@ -17,7 +17,7 @@ for (const [id, icon] of [['bag-close', 'x'], ['store-close', 'x'], ['store-refr
 let floors = [];
 const logs = [];
 const queued = {};          // floor id → orders waiting for the current run
-let update = null;   // newer release { version, url } for the bell; cleared once opened
+let update = null;   // downloaded release { version } waiting for a restart, for the bell
 const asks = new Map();      // ask id → { floor, who, rank, text }
 
 async function loadFloors(list) {
@@ -219,7 +219,7 @@ function renderBell() {
     const fi = floors.findIndex(f => f.id === a.floor);
     return `<li><button data-floor="${esc(a.floor)}">${ICON.hand}<b>${fi + 2}F ${esc(floors[fi]?.name)} · ${esc(a.who)} 승인 요청</b><small>${esc(a.text)}</small></button></li>`;
   });
-  if (update) items.unshift(`<li><button data-update>${ICON.spark}<b>새 버전 ${esc(update.version)}이 나왔어요</b><small>눌러서 받으러 가기</small></button></li>`);
+  if (update) items.unshift(`<li><button data-update>${ICON.spark}<b>새 버전 ${esc(update.version)} 준비됐어요</b><small>눌러서 재시작하고 업데이트</small></button></li>`);
   $('#bell ul').innerHTML = items.join('') || '<li class="none">새 알림이 없어요</li>';
 }
 const closeBell = () => { $('#bell').hidden = true; $('#bell-btn').setAttribute('aria-expanded', 'false'); };
@@ -229,7 +229,7 @@ $('#bell-btn').onclick = () => {
 };
 $('#bell').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
-  if ('update' in b.dataset) { office.openUrl(update.url); update = null; closeToast('update'); }
+  if ('update' in b.dataset) return office.installUpdate();
   else world.enter(b.dataset.floor);
   closeBell(); renderBell();
 };
@@ -329,10 +329,10 @@ office.on(e => {
   if (e.kind === 'auth') loginQuest(e.cli, 'login');
   if (e.kind === 'headroom-down') toast({ id: 'headroom', icon: 'bolt', tone: 'quest', ttl: 6000, title: 'Headroom이 꺼져 있어요',
     body: '이번 일은 프록시 없이 그냥 실행해요. 터미널에서 headroom proxy를 켜면 다음 일부터 거쳐 가요.' });
-  if (e.kind === 'update') { update = { version: e.version, url: e.url }; renderBell(); }
-  if (e.kind === 'update') toast({ id: 'update', icon: 'spark', tone: 'info', title: `새 버전 ${e.version}이 나왔어요`,
-    body: '받아서 설치하면 사무실과 기록은 그대로 이어져요.',
-    actions: [['받으러 가기', 'yes', () => { office.openUrl(e.url); closeToast('update'); update = null; renderBell(); }], ['나중에', 'no', () => closeToast('update')]] });
+  if (e.kind === 'update') { update = { version: e.version }; renderBell(); }
+  if (e.kind === 'update') toast({ id: 'update', icon: 'spark', tone: 'info', title: `새 버전 ${e.version} 준비됐어요`,
+    body: '재시작하면 바로 적용돼요. 나중에 하면 앱을 끌 때 알아서 설치돼요. 사무실과 기록은 그대로예요.',
+    actions: [['지금 재시작', 'yes', () => office.installUpdate()], ['나중에', 'no', () => closeToast('update')]] });
 });
 
 await world.ready();
