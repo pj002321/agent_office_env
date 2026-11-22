@@ -313,7 +313,8 @@ ipcMain.handle('claim', () => walletCall('claim'));
 ipcMain.handle('attend', () => walletCall('attend'));
 ipcMain.handle('admin', (_, act, n) => walletCall('admin', { act: String(act), n: Number(n) }));
 ipcMain.handle('admin-stats', () => account.wallet({ op: 'admin-stats' }).catch(fail));
-ipcMain.handle('open-url', (_, url) => /^https:\/\//.test(url) && shell.openExternal(url));
+ipcMain.handle('open-url', (_, url) => /^(https:\/\/|mailto:)/.test(url) && shell.openExternal(url));
+ipcMain.on('quit', () => app.quit());   // window-all-closed stops any running CLIs
 
 app.whenReady().then(() => {
   win = new BrowserWindow({ width: 1440, height: 900, minWidth: 1100, minHeight: 700, title: 'Cozy Office',

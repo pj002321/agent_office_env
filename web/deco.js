@@ -162,6 +162,9 @@ $('#admin-stats-btn').onclick = async () => {
     ...s.recent.map(p => `· ${p.created_at.slice(0, 10)} ${p.total} ${p.currency} ${p.status}`)].join('\n');
 };
 $('#acct-out').onclick = () => office.logout().then(() => location.reload());   // reload → the sign-in paper
+$('#app-mail').onclick = () => office.openUrl('mailto:t55300354@gmail.com?subject=' + encodeURIComponent('[Cozy Office] 문의'));
+$('#app-bug').onclick = () => office.openUrl('https://github.com/pj002321/agent_office_env/issues/new');
+$('#app-quit').onclick = () => office.quit();
 
 // paid orders land on the server via webhook; pick them up whenever the user comes back to the app
 async function claim() {

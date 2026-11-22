@@ -37,5 +37,6 @@ contextBridge.exposeInMainWorld('office', {
   headroom: () => ipcRenderer.invoke('headroom'),
   setHeadroom: on => ipcRenderer.invoke('set-headroom', on),
   openUrl: url => ipcRenderer.invoke('open-url', url),
+  quit: () => ipcRenderer.send('quit'),
   on: cb => ipcRenderer.on('office', (_, e) => cb(e)),
 });
